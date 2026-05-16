@@ -100,6 +100,10 @@ export const createUpgradeBilling = createServerFn({ method: "POST" })
           completionUrl: data.returnUrl,
           items: [{ id: productId, quantity: 1 }],
           methods: ["PIX", "CARD"],
+          metadata: {
+            userId: data.userId,
+            planId: data.planId
+          },
           customer: {
             metadata: {
               userId: data.userId,

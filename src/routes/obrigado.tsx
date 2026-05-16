@@ -13,34 +13,49 @@ function Obrigado() {
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
+    let isActive = true;
 
     const finalizePayment = async () => {
       try {
-        // Atualiza a sessão local para pegar as alterações feitas pelo webhook (plano atualizado)
-        await supabase.auth.refreshSession();
+        console.log("[Obrigado] Aguardando webhook atualizar a conta...");
         
-        // Aguarda mais um instante para garantir que o webhook do AbacatePay terminou
-        // caso o redirecionamento tenha sido muito rápido
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
-        // Atualiza novamente por precaução
-        await supabase.auth.refreshSession();
+        // Polling para checar se o plano mudou
+        let updated = false;
+        for (let i = 0; i < 8; i++) {
+          if (!isActive) break;
+          const { data } = await supabase.auth.refreshSession();
+          const currentPlan = data.user?.user_metadata?.plan;
+          
+          if (currentPlan && currentPlan !== 'Teste' && currentPlan !== 'Starter') {
+            console.log("[Obrigado] Plano atualizado detectado:", currentPlan);
+            updated = true;
+            break;
+          }
+          
+          // Espera 2 segundos antes de tentar de novo (total de até 16s)
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+
+        if (!updated) {
+          console.warn("[Obrigado] Tempo limite excedido aguardando webhook. O plano pode atualizar em alguns minutos.");
+        }
 
       } catch (error) {
         console.error("Erro ao atualizar sessão:", error);
       } finally {
-        setProcessing(false);
-        
-        // Redireciona para o sistema
-        timeoutId = setTimeout(() => {
-          navigate({ to: '/app' });
-        }, 4000);
+        if (isActive) {
+          setProcessing(false);
+          timeoutId = setTimeout(() => {
+            navigate({ to: '/app' });
+          }, 3000);
+        }
       }
     };
 
     finalizePayment();
 
     return () => {
+      isActive = false;
       if (timeoutId) clearTimeout(timeoutId);
     };
   }, [navigate]);
