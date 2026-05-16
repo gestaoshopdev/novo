@@ -1,8 +1,8 @@
-import { createAPIFileRoute } from '@tanstack/react-start/api'
+import { createFileRoute } from '@tanstack/react-router'
 import { supabase } from '@/lib/supabase'
 
-export const Route = createAPIFileRoute('/api/webhook')({
-  POST: async ({ request }) => {
+export const Route = createFileRoute('/api/webhook')({
+  beforeLoad: async ({ request }) => {
     try {
       const payload = await request.json()
       console.log("[Webhook] Recebido payload do AbacatePay:", payload)
@@ -39,5 +39,6 @@ export const Route = createAPIFileRoute('/api/webhook')({
       console.error("[Webhook] Erro ao processar requisição:", error)
       return new Response("Internal Server Error", { status: 500 })
     }
-  }
+  },
+  component: () => null
 })
