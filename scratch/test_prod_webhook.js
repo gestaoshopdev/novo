@@ -9,10 +9,15 @@ async function testWebhook() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
+        id: "log_abc123xyz",
         event: "checkout.completed",
+        apiVersion: 2,
+        devMode: true,
         data: {
+          id: "chk_test123",
+          status: "PAID",
           metadata: {
-            userId: "00000000-0000-0000-0000-000000000000",
+            userId: "6c93b6e8-0b5c-4f81-9b16-cd3c110b9a37", // Um id generico qlqr, n importa pra ver o log
             planId: "pro"
           }
         }
