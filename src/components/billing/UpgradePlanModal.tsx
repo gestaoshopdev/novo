@@ -1,0 +1,169 @@
+import React, { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Check, Loader2, Sparkles, X } from "lucide-react";
+import { PLANS, createUpgradeBilling } from "@/lib/abacatepay";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
+
+interface UpgradePlanModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function UpgradePlanModal({ open, onOpenChange }: UpgradePlanModalProps) {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleSubscribe = async (planId: keyof typeof PLANS) => {
+    if (loading) return;
+    
+    try {
+      setLoading(planId);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Você precisa estar logado para assinar um plano.");
+        setLoading(null);
+        return;
+      }
+
+      console.log(`[Checkout] Iniciando assinatura para o plano: ${planId} (User: ${user.id})`);
+      
+      const returnUrl = `${window.location.origin}/obrigado`;
+
+      const result = await createUpgradeBilling({
+        data: {
+          planId,
+          returnUrl,
+          userId: user.id
+        }
+      });
+
+      if (result && result.checkoutUrl) {
+        window.open(result.checkoutUrl, '_blank');
+        onOpenChange(false);
+      } else {
+        throw new Error("A resposta do servidor não contém o link de checkout.");
+      }
+    } catch (error: any) {
+      console.error("[Checkout Error]", error);
+      const message = error.message || "Erro inesperado ao gerar o link de pagamento.";
+      toast.error(message);
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const plans = [
+    {
+      id: "starter" as const,
+      name: PLANS.starter.name,
+      description: PLANS.starter.description,
+      price: "9,90",
+      features: ["1 Catálogo Digital", "Até 10 produtos", "1 foto por produto", "Dashboard de vendas", "Suporte via E-mail"],
+      popular: false,
+    },
+    {
+      id: "pro" as const,
+      name: PLANS.pro.name,
+      description: PLANS.pro.description,
+      price: "14,90",
+      features: ["5 Catálogos Digitais", "Até 60 produtos por catálogo", "5 fotos por produto", "Personalização de cores", "Suporte prioritário via WhatsApp"],
+      popular: true,
+    },
+    {
+      id: "elite" as const,
+      name: PLANS.elite.name,
+      description: PLANS.elite.description,
+      price: "19,90",
+      features: ["10 Catálogos Digitais", "Até 500 produtos por catálogo", "10 fotos por produto", "Remoção da marca d'água", "Capa personalizada"],
+      popular: false,
+    }
+  ];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={cn(
+        "max-w-4xl p-0 overflow-hidden border-none bg-background"
+      )}>
+        <DialogHeader className="sr-only">
+          <DialogTitle>Upgrade de Plano</DialogTitle>
+          <DialogDescription>Escolha um plano para fazer o upgrade da sua conta.</DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-col h-full overflow-y-auto">
+          <div className="p-8 text-center space-y-2 border-b border-border/50 bg-gradient-to-br from-background via-background to-primary/5">
+              <div className="mx-auto w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
+                <Sparkles className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold tracking-tight">Faça o Upgrade do seu Plano</h2>
+              <p className="text-muted-foreground">Escolha o melhor plano para escalar suas operações e decole suas vendas.</p>
+            </div>
+
+            <div className="p-8 grid gap-6 md:grid-cols-3 bg-muted/20">
+              {plans.map((plan) => (
+                <div 
+                  key={plan.id}
+                  className={cn(
+                    "relative flex flex-col p-6 rounded-xl border bg-background transition-all duration-200",
+                    plan.popular 
+                      ? "border-primary shadow-[0_0_20px_rgba(var(--primary),0.15)] scale-105 z-10" 
+                      : "border-border hover:border-primary/50"
+                  )}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] rounded-full text-[10px] font-bold text-white tracking-wider uppercase shadow-md">
+                      Mais Popular
+                    </div>
+                  )}
+
+                  <div className="mb-4">
+                    <h3 className="font-bold text-lg text-foreground">{plan.name}</h3>
+                    <p className="text-[13px] text-muted-foreground h-10 mt-1">{plan.description}</p>
+                  </div>
+
+                  <div className="mb-6 flex items-baseline text-foreground">
+                    <span className="text-2xl font-bold tracking-tight">R$</span>
+                    <span className="text-4xl font-black tracking-tight ml-1">{plan.price}</span>
+                    <span className="text-sm font-medium text-muted-foreground ml-1">/mês</span>
+                  </div>
+
+                  <ul className="space-y-3 mb-8 flex-1">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2.5 text-[13px]">
+                        <div className="mt-0.5 rounded-full bg-primary/20 p-0.5">
+                          <Check className="h-3 w-3 text-primary" />
+                        </div>
+                        <span className="text-foreground/80 leading-tight">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <button
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={loading !== null}
+                    className={cn(
+                      "w-full py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2",
+                      plan.popular
+                        ? "bg-gradient-to-r from-[#9b87f5] to-[#7E69AB] text-white hover:opacity-90 shadow-md"
+                        : "bg-muted text-foreground hover:bg-muted/80",
+                      loading === plan.id && "opacity-70 cursor-not-allowed"
+                    )}
+                  >
+                    {loading === plan.id ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Gerando PIX...
+                      </>
+                    ) : (
+                      "Assinar Agora"
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
