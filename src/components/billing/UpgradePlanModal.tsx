@@ -40,8 +40,7 @@ export function UpgradePlanModal({ open, onOpenChange }: UpgradePlanModalProps) 
       });
 
       if (result && result.checkoutUrl) {
-        window.open(result.checkoutUrl, '_blank');
-        onOpenChange(false);
+        window.location.href = result.checkoutUrl;
       } else {
         throw new Error("A resposta do servidor não contém o link de checkout.");
       }
