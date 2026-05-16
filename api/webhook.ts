@@ -14,9 +14,21 @@ export default async function handler(request: Request) {
     console.log("[Webhook] Recebido payload do AbacatePay:", payload);
 
     if (payload.event === 'checkout.completed') {
-      const metadata = payload.data?.metadata || payload.data?.customer?.metadata || {};
-      const userId = metadata.userId;
-      const planId = metadata.planId;
+      let rawMetadata = payload.data?.metadata || payload.data?.customer?.metadata || payload.metadata;
+      
+      // Alguns gateways enviam metadata como string JSON
+      if (typeof rawMetadata === 'string') {
+        try {
+          rawMetadata = JSON.parse(rawMetadata);
+        } catch (e) {
+          console.error("Erro ao fazer parse do metadata string:", e);
+          rawMetadata = {};
+        }
+      }
+
+      const metadata = rawMetadata || {};
+      const userId = metadata.userId || metadata.user_id;
+      const planId = metadata.planId || metadata.plan_id;
 
       if (!userId || !planId) {
         console.error("[Webhook] Payload recebido sem userId ou planId no metadata.", JSON.stringify(payload));
