@@ -1,0 +1,52 @@
+import { createClient } from '@supabase/supabase-js';
+
+export const config = {
+  runtime: 'edge',
+};
+
+export default async function handler(request: Request) {
+  if (request.method !== 'POST') {
+    return new Response('Method Not Allowed', { status: 405 });
+  }
+
+  try {
+    const payload = await request.json();
+    console.log("[Webhook] Recebido payload do AbacatePay:", payload);
+
+    if (payload.event === 'checkout.completed') {
+      const metadata = payload.data?.metadata || payload.data?.customer?.metadata || {};
+      const userId = metadata.userId;
+      const planId = metadata.planId;
+
+      if (!userId || !planId) {
+        console.error("[Webhook] Payload recebido sem userId ou planId no metadata.", JSON.stringify(payload));
+        return new Response("Missing metadata", { status: 400 });
+      }
+
+      const planName = planId.charAt(0).toUpperCase() + planId.slice(1);
+      
+      const supabase = createClient(
+        process.env.VITE_SUPABASE_URL || "https://ylsdljylqbnuajjyipwy.supabase.co",
+        process.env.VITE_SUPABASE_ANON_KEY || "sb_publishable_nqdrO05frnjf0uatCInaNQ_KQQYbOry"
+      );
+
+      const { error } = await supabase.rpc('process_webhook_payment', {
+        p_user_id: userId,
+        p_plan: planName,
+        p_secret: 'atlas-webhook-secret-2026'
+      });
+
+      if (error) {
+        console.error("[Webhook] Erro ao processar pagamento via RPC:", error);
+        return new Response("Error updating plan", { status: 500 });
+      }
+
+      console.log(`[Webhook] Plano ${planName} atualizado com sucesso para o usuário ${userId}!`);
+    }
+
+    return new Response("OK", { status: 200 });
+  } catch (error) {
+    console.error("[Webhook] Erro ao processar requisição:", error);
+    return new Response("Internal Server Error", { status: 500 });
+  }
+}
