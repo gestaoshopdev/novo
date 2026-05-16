@@ -135,3 +135,8 @@ export async function getAdminPartners() {
   if (error) throw error;
   return data;
 }
+
+export async function removePartner(userId: string) {
+  const { error } = await supabase.rpc('remove_partner', { p_target_user_id: userId });
+  if (error) throw error;
+}

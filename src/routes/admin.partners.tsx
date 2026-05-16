@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus } from "lucide-react";
+import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus, Trash2, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid, getAdminPartners } from "@/lib/referrals";
+import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid, getAdminPartners, removePartner } from "@/lib/referrals";
 import { ManagePartnerModal } from "@/components/admin/ManagePartnerModal";
 import { PartnerDetailsModal } from "@/components/admin/PartnerDetailsModal";
 import { formatBRL } from "@/components/sales/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,9 @@ function AdminPartners() {
   
   const [managePartnerOpen, setManagePartnerOpen] = useState(false);
   const [selectedPartnerDetails, setSelectedPartnerDetails] = useState<any>(null);
+  
+  const [partnerToRemove, setPartnerToRemove] = useState<any>(null);
+  const [removingPartner, setRemovingPartner] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -47,6 +51,21 @@ function AdminPartners() {
       toast.error(`Erro ao carregar dados: ${e.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRemovePartner = async () => {
+    if (!partnerToRemove) return;
+    setRemovingPartner(true);
+    try {
+      await removePartner(partnerToRemove.id);
+      toast.success("Parceiro removido com sucesso!");
+      fetchData();
+    } catch (e: any) {
+      toast.error(`Erro ao remover parceiro: ${e.message || 'Erro desconhecido'}`);
+    } finally {
+      setRemovingPartner(false);
+      setPartnerToRemove(null);
     }
   };
 
@@ -195,9 +214,14 @@ function AdminPartners() {
                     <td className="px-6 py-4 uppercase font-bold">{p.plan_type}</td>
                     <td className="px-6 py-4 font-bold">{p.commission_rate}%</td>
                     <td className="px-6 py-4 text-right">
-                      <Button onClick={() => setSelectedPartnerDetails(p)} size="sm" variant="outline">
-                        Detalhes
-                      </Button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => setPartnerToRemove(p)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors" title="Remover Parceiro">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <Button onClick={() => setSelectedPartnerDetails(p)} size="sm" variant="outline">
+                          Detalhes
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -246,6 +270,39 @@ function AdminPartners() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog.Root open={!!partnerToRemove} onOpenChange={(open) => !open && setPartnerToRemove(null)}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[60]" />
+          <AlertDialog.Content className="fixed left-[50%] top-[50%] z-[60] w-full max-w-md translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border bg-card p-6 shadow-xl animate-in fade-in-0 zoom-in-95">
+            <div className="flex flex-col gap-2">
+              <AlertDialog.Title className="text-lg font-semibold text-destructive flex items-center gap-2">
+                <Trash2 className="w-5 h-5" />
+                Remover Parceiro?
+              </AlertDialog.Title>
+              <AlertDialog.Description className="text-sm text-muted-foreground">
+                Tem certeza que deseja remover <strong>{partnerToRemove?.email}</strong> da lista de parceiros comerciais? Ele deixará de receber comissões customizadas.
+              </AlertDialog.Description>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <AlertDialog.Cancel asChild>
+                <button className="h-10 px-4 rounded-lg border border-border bg-surface hover:bg-muted transition-colors text-sm font-medium">
+                  Cancelar
+                </button>
+              </AlertDialog.Cancel>
+              <AlertDialog.Action asChild>
+                <button 
+                  onClick={handleRemovePartner}
+                  disabled={removingPartner}
+                  className="h-10 px-4 rounded-lg bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity text-sm font-semibold flex items-center gap-2"
+                >
+                  {removingPartner ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sim, Remover Parceiro"}
+                </button>
+              </AlertDialog.Action>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
 
       <ManagePartnerModal 
         open={managePartnerOpen} 
