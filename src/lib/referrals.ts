@@ -97,28 +97,13 @@ export async function checkReferralCodeValidity(code: string) {
 // ADMIN FUNCTIONS
 
 export async function getAdminPayoutRequests() {
-  const { data, error } = await supabase
-    .from('payout_requests')
-    .select(`
-      *,
-      user:user_id ( id, email, raw_user_meta_data )
-    `)
-    .order('created_at', { ascending: false });
-
+  const { data, error } = await supabase.rpc('get_admin_payout_requests');
   if (error) throw error;
   return data;
 }
 
 export async function getAdminCommissions() {
-  const { data, error } = await supabase
-    .from('commissions')
-    .select(`
-      *,
-      referrer:referrer_id ( id, email, raw_user_meta_data ),
-      referred:referred_id ( id, email, raw_user_meta_data )
-    `)
-    .order('created_at', { ascending: false });
-
+  const { data, error } = await supabase.rpc('get_admin_commissions');
   if (error) throw error;
   return data;
 }
@@ -142,5 +127,11 @@ export async function markPayoutAsPaid(payoutId: string, receiptUrl: string) {
     p_amount_cents: data.amount_cents 
   });
 
+  return data;
+}
+
+export async function getAdminPartners() {
+  const { data, error } = await supabase.rpc('get_partners_by_admin');
+  if (error) throw error;
   return data;
 }

@@ -61,29 +61,54 @@ BEGIN
       WHERE id = v_referrer_id;
     END IF;
 
-    -- 5.3 Se indicador for Pro ou Elite, calcular comissão
-    IF v_referrer_plan = 'Pro' OR v_referrer_plan = 'Elite' THEN
-      v_percentage := CASE WHEN v_referrer_plan = 'Elite' THEN 0.20 ELSE 0.10 END;
+    -- Bloco de cálculo de comissão com suporte a parceiros
+    DECLARE
+      v_is_partner BOOLEAN;
+      v_partner_rate INTEGER;
+    BEGIN
+      SELECT (raw_user_meta_data->>'is_partner')::boolean, (raw_user_meta_data->>'commission_rate')::integer
+      INTO v_is_partner, v_partner_rate
+      FROM auth.users
+      WHERE id = v_referrer_id;
       
-      -- Define o valor base em centavos dependendo do plano assinado
-      IF p_plan = 'Starter' THEN
-        v_commission_cents := 990 * v_percentage;
-      ELSIF p_plan = 'Pro' THEN
-        v_commission_cents := 1490 * v_percentage;
-      ELSIF p_plan = 'Elite' THEN
-        v_commission_cents := 1990 * v_percentage;
+      -- 5.3 Definir a porcentagem baseada em ser parceiro ou no plano
+      IF COALESCE(v_is_partner, false) AND COALESCE(v_partner_rate, 0) > 0 THEN
+        -- Garantir que não passe de 25%
+        IF v_partner_rate > 25 THEN
+          v_percentage := 0.25;
+        ELSE
+          v_percentage := v_partner_rate / 100.0;
+        END IF;
+      ELSIF v_referrer_plan = 'Elite' THEN
+        v_percentage := 0.20;
+      ELSIF v_referrer_plan = 'Pro' THEN
+        v_percentage := 0.10;
       ELSE
-        v_commission_cents := 0;
+        v_percentage := 0;
       END IF;
 
-      -- 5.4 Inserir comissão pendente para liberar em 7 dias
-      IF v_commission_cents > 0 THEN
-        v_available_at := now() + interval '7 days';
-        
-        INSERT INTO public.commissions (referrer_id, referred_id, amount_cents, status, available_at)
-        VALUES (v_referrer_id, p_user_id, v_commission_cents, 'pending', v_available_at);
+      -- 5.4 Se a porcentagem for maior que 0, calcular e inserir comissão
+      IF v_percentage > 0 THEN
+        -- Define o valor base em centavos dependendo do plano assinado
+        IF p_plan = 'Starter' THEN
+          v_commission_cents := 990 * v_percentage;
+        ELSIF p_plan = 'Pro' THEN
+          v_commission_cents := 1490 * v_percentage;
+        ELSIF p_plan = 'Elite' THEN
+          v_commission_cents := 1990 * v_percentage;
+        ELSE
+          v_commission_cents := 0;
+        END IF;
+
+        -- Inserir comissão pendente para liberar em 7 dias
+        IF v_commission_cents > 0 THEN
+          v_available_at := now() + interval '7 days';
+          
+          INSERT INTO public.commissions (referrer_id, referred_id, amount_cents, status, available_at)
+          VALUES (v_referrer_id, p_user_id, v_commission_cents, 'pending', v_available_at);
+        END IF;
       END IF;
-    END IF;
+    END;
   END IF;
 
 END;

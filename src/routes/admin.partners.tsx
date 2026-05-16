@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Handshake, Users, Check, X, DollarSign, ExternalLink } from "lucide-react";
+import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid } from "@/lib/referrals";
+import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid, getAdminPartners } from "@/lib/referrals";
+import { ManagePartnerModal } from "@/components/admin/ManagePartnerModal";
+import { PartnerDetailsModal } from "@/components/admin/PartnerDetailsModal";
 import { formatBRL } from "@/components/sales/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -18,10 +20,14 @@ export const Route = createFileRoute("/admin/partners")({
 function AdminPartners() {
   const [payouts, setPayouts] = useState<any[]>([]);
   const [commissions, setCommissions] = useState<any[]>([]);
+  const [partners, setPartners] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [selectedPayout, setSelectedPayout] = useState<any>(null);
   const [receiptUrl, setReceiptUrl] = useState("");
+  
+  const [managePartnerOpen, setManagePartnerOpen] = useState(false);
+  const [selectedPartnerDetails, setSelectedPartnerDetails] = useState<any>(null);
 
   useEffect(() => {
     fetchData();
@@ -32,11 +38,13 @@ function AdminPartners() {
       setLoading(true);
       const reqs = await getAdminPayoutRequests();
       const comms = await getAdminCommissions();
+      const parts = await getAdminPartners();
       setPayouts(reqs || []);
       setCommissions(comms || []);
-    } catch (e) {
+      setPartners(parts || []);
+    } catch (e: any) {
       console.error(e);
-      toast.error("Erro ao carregar dados de parceiros");
+      toast.error(`Erro ao carregar dados: ${e.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }
@@ -153,6 +161,52 @@ function AdminPartners() {
         )}
       </div>
 
+      <div className="flex items-center justify-between mt-8">
+        <h3 className="font-bold text-lg">Parceiros Comerciais</h3>
+        <Button onClick={() => setManagePartnerOpen(true)} className="bg-primary text-primary-foreground font-medium text-sm flex items-center gap-2">
+          <UserPlus className="w-4 h-4" />
+          Adicionar Parceiro Manual
+        </Button>
+      </div>
+
+      <div className="bg-card border border-border rounded-2xl overflow-hidden mt-4">
+        {loading ? (
+          <div className="p-8 text-center text-muted-foreground">Carregando...</div>
+        ) : partners.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground">Nenhum parceiro comercial cadastrado.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border">
+                <tr>
+                  <th className="px-6 py-4 font-medium">Parceiro</th>
+                  <th className="px-6 py-4 font-medium">Plano</th>
+                  <th className="px-6 py-4 font-medium">Comissão</th>
+                  <th className="px-6 py-4 font-medium text-right">Ação</th>
+                </tr>
+              </thead>
+              <tbody>
+                {partners.map((p) => (
+                  <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20">
+                    <td className="px-6 py-4">
+                      {p.full_name || 'Usuário'} <br/>
+                      <span className="text-xs text-muted-foreground">{p.email}</span>
+                    </td>
+                    <td className="px-6 py-4 uppercase font-bold">{p.plan_type}</td>
+                    <td className="px-6 py-4 font-bold">{p.commission_rate}%</td>
+                    <td className="px-6 py-4 text-right">
+                      <Button onClick={() => setSelectedPartnerDetails(p)} size="sm" variant="outline">
+                        Detalhes
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       <Dialog open={!!selectedPayout} onOpenChange={(o) => !o && setSelectedPayout(null)}>
         <DialogContent>
           <DialogHeader>
@@ -192,6 +246,20 @@ function AdminPartners() {
           )}
         </DialogContent>
       </Dialog>
+
+      <ManagePartnerModal 
+        open={managePartnerOpen} 
+        onOpenChange={setManagePartnerOpen} 
+        onSuccess={fetchData}
+      />
+
+      <PartnerDetailsModal 
+        open={!!selectedPartnerDetails} 
+        onOpenChange={(o) => !o && setSelectedPartnerDetails(null)} 
+        partner={selectedPartnerDetails}
+        commissions={commissions}
+      />
+
     </div>
   );
 }
