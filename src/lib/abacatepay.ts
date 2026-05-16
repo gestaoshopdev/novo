@@ -97,6 +97,7 @@ export const createUpgradeBilling = createServerFn({ method: "POST" })
         headers,
         body: JSON.stringify({
           returnUrl: data.returnUrl,
+          completionUrl: data.returnUrl,
           items: [{ id: productId, quantity: 1 }],
           methods: ["PIX", "CARD"],
           customer: {
