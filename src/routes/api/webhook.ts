@@ -1,7 +1,7 @@
 import { createAPIFileRoute } from '@tanstack/react-start/api'
 import { supabase } from '@/lib/supabase'
 
-export const APIRoute = createAPIFileRoute('/api/webhook')({
+export const Route = createAPIFileRoute('/api/webhook')({
   POST: async ({ request }) => {
     try {
       const payload = await request.json()

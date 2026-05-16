@@ -34,6 +34,7 @@ import { Route as AppCatalogRouteImport } from './routes/app.catalog'
 import { Route as AppCashflowRouteImport } from './routes/app.cashflow'
 import { Route as AppAutomationsRouteImport } from './routes/app.automations'
 import { Route as AppAnalyticsRouteImport } from './routes/app.analytics'
+import { Route as ApiWebhookRouteImport } from './routes/api/webhook'
 import { Route as AdminLoginRouteImport } from './routes/admin_.login'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminPartnersRouteImport } from './routes/admin.partners'
@@ -165,6 +166,11 @@ const AppAnalyticsRoute = AppAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => AppRoute,
 } as any)
+const ApiWebhookRoute = ApiWebhookRouteImport.update({
+  id: '/api/webhook',
+  path: '/api/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminLoginRoute = AdminLoginRouteImport.update({
   id: '/admin_/login',
   path: '/admin/login',
@@ -202,6 +208,7 @@ export interface FileRoutesByFullPath {
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/login': typeof AdminLoginRoute
+  '/api/webhook': typeof ApiWebhookRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
   '/app/cashflow': typeof AppCashflowRoute
@@ -232,6 +239,7 @@ export interface FileRoutesByTo {
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/login': typeof AdminLoginRoute
+  '/api/webhook': typeof ApiWebhookRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
   '/app/cashflow': typeof AppCashflowRoute
@@ -265,6 +273,7 @@ export interface FileRoutesById {
   '/admin/partners': typeof AdminPartnersRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin_/login': typeof AdminLoginRoute
+  '/api/webhook': typeof ApiWebhookRoute
   '/app/analytics': typeof AppAnalyticsRoute
   '/app/automations': typeof AppAutomationsRoute
   '/app/cashflow': typeof AppCashflowRoute
@@ -299,6 +308,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/users'
     | '/admin/login'
+    | '/api/webhook'
     | '/app/analytics'
     | '/app/automations'
     | '/app/cashflow'
@@ -329,6 +339,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/users'
     | '/admin/login'
+    | '/api/webhook'
     | '/app/analytics'
     | '/app/automations'
     | '/app/cashflow'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/admin/partners'
     | '/admin/users'
     | '/admin_/login'
+    | '/api/webhook'
     | '/app/analytics'
     | '/app/automations'
     | '/app/cashflow'
@@ -390,6 +402,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ObrigadoRoute: typeof ObrigadoRoute
   AdminLoginRoute: typeof AdminLoginRoute
+  ApiWebhookRoute: typeof ApiWebhookRoute
   CtSlugRoute: typeof CtSlugRoute
 }
 
@@ -570,6 +583,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAnalyticsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/api/webhook': {
+      id: '/api/webhook'
+      path: '/api/webhook'
+      fullPath: '/api/webhook'
+      preLoaderRoute: typeof ApiWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin_/login': {
       id: '/admin_/login'
       path: '/admin/login'
@@ -677,6 +697,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ObrigadoRoute: ObrigadoRoute,
   AdminLoginRoute: AdminLoginRoute,
+  ApiWebhookRoute: ApiWebhookRoute,
   CtSlugRoute: CtSlugRoute,
 }
 export const routeTree = rootRouteImport
