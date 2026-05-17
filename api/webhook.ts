@@ -11,9 +11,8 @@ export default async function handler(request: Request) {
 
   try {
     const payload = await request.json();
-    console.log("[Webhook] Recebido payload do AbacatePay:", payload);
-
-    if (payload.event === 'checkout.completed') {
+    const validEvents = ['checkout.completed', 'subscription.renewed', 'billing.paid'];
+    if (validEvents.includes(payload.event)) {
       let rawMetadata = payload.data?.checkout?.metadata || payload.data?.metadata || payload.data?.customer?.metadata || payload.metadata;
       
       // Alguns gateways enviam metadata como string JSON
