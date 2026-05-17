@@ -58,6 +58,25 @@ export async function getCommissions(userId: string) {
     .order('created_at', { ascending: false });
 
   if (error) throw error;
+
+  // Atualizar status de comissões que já passaram da carência de 7 dias
+  const now = new Date();
+  const commissionsToUpdate = (data as Commission[]).filter(c => 
+    c.status === 'pending' && new Date(c.available_at) <= now
+  );
+
+  if (commissionsToUpdate.length > 0) {
+    const ids = commissionsToUpdate.map(c => c.id);
+    
+    // Dispara a atualização silenciosamente no banco
+    supabase.from('commissions').update({ status: 'available' }).in('id', ids).then(({ error }) => {
+      if (error) console.error("Erro ao atualizar status de comissões", error);
+    });
+    
+    // Atualiza localmente para refletir imediatamente na UI
+    commissionsToUpdate.forEach(c => c.status = 'available');
+  }
+
   return data as Commission[];
 }
 
