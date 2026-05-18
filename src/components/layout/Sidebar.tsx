@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useRouterState } from "@tanstack/react-router";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Package, Tags, ShoppingCart, Radio, CreditCard,
   Wallet, Receipt, TrendingDown, BarChart3, FileText, BookOpen,
@@ -64,6 +64,39 @@ export function Sidebar() {
   const { name, plan, planStatus, photo } = useProfile();
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [showUpgradeCard, setShowUpgradeCard] = useState(true);
+
+  const normalizedPlan = plan?.toLowerCase() || 'starter';
+  const isTrial = planStatus === 'trial';
+  const isTopPlan = normalizedPlan === 'elite' && !isTrial;
+
+  const upgradeMessages = [];
+  if (normalizedPlan === 'starter' || isTrial) {
+    upgradeMessages.push(
+      { title: "Desbloqueie o Plano Pro", desc: "Tenha até 5 catálogos digitais para suas lojas." },
+      { title: "Personalize sua Loja", desc: "Ative cores customizadas para a sua marca." },
+      { title: "Expanda seu Estoque", desc: "Cadastre até 60 produtos por catálogo no Pro." }
+    );
+  }
+  if (normalizedPlan === 'starter' || normalizedPlan === 'pro' || isTrial) {
+    upgradeMessages.push(
+      { title: "Vire Elite", desc: "Remova a marca d'água da GestãoShop do seu catálogo." },
+      { title: "Aumente seu Alcance", desc: "Tenha até 10 catálogos com 500 produtos cada." },
+      { title: "Destaque Visual", desc: "Adicione capa personalizada ao seu catálogo no Elite." }
+    );
+  }
+
+  const defaultMessages = [{ title: "Desbloqueie a IA Pro", desc: "Insights preditivos e automações ilimitadas." }];
+  const messages = upgradeMessages.length > 0 ? upgradeMessages : defaultMessages;
+
+  const [currentMsgIdx, setCurrentMsgIdx] = useState(0);
+
+  useEffect(() => {
+    if (isTopPlan || !showUpgradeCard || messages.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentMsgIdx(prev => (prev + 1) % messages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [isTopPlan, showUpgradeCard, messages.length]);
 
   return (
     <>
@@ -146,9 +179,9 @@ export function Sidebar() {
         </nav>
 
         {/* Upgrade card */}
-        {showUpgradeCard && (
+        {showUpgradeCard && !isTopPlan && (
           <div className="p-3">
-            <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-primary/20 via-fuchsia-500/10 to-transparent border border-primary/20 group/card">
+            <div className="relative overflow-hidden rounded-xl p-4 bg-gradient-to-br from-primary/20 via-fuchsia-500/10 to-transparent border border-primary/20 group/card min-h-[140px] flex flex-col justify-between">
               <button 
                 onClick={(e) => {
                   e.preventDefault();
@@ -160,9 +193,23 @@ export function Sidebar() {
                 <X className="h-3 w-3" />
               </button>
               <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-primary/30 blur-2xl" />
-              <Sparkles className="h-4 w-4 text-primary mb-2" />
-              <p className="text-[12px] font-semibold text-sidebar-foreground leading-tight">Desbloqueie a IA Pro</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">Insights preditivos e automações ilimitadas.</p>
+              
+              <div className="relative z-10 flex-1 min-h-[40px]">
+                <Sparkles className="h-4 w-4 text-primary mb-2" />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentMsgIdx}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <p className="text-[12px] font-semibold text-sidebar-foreground leading-tight">{messages[currentMsgIdx].title}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{messages[currentMsgIdx].desc}</p>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
               <button 
                 onClick={() => setUpgradeModalOpen(true)}
                 className="mt-3 w-full text-[11px] font-semibold py-1.5 rounded-md gradient-primary text-white hover:opacity-90 transition relative z-10"
