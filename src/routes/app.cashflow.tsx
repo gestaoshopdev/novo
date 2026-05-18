@@ -295,7 +295,7 @@ function CashflowPage() {
         actions={
           <Button 
             onClick={() => setExpenseModalOpen(true)}
-            className="bg-success hover:bg-success/90 text-success-foreground gap-2 font-bold shadow-lg shadow-success/20 h-10"
+            className="gradient-primary text-white gap-2 font-bold shadow-lg glow-primary border-transparent h-10 hover:opacity-90 transition-opacity"
           >
             <Plus className="h-4 w-4" /> Novo Lançamento Manual
           </Button>

@@ -124,7 +124,7 @@ function CatalogRoute() {
         subtitle="Crie e gerencie catálogos públicos para seus clientes" 
         icon={BookOpen} 
         actions={
-          <Button onClick={handleNewCatalog} className="bg-emerald-500 hover:bg-emerald-600">
+          <Button onClick={handleNewCatalog} className="gradient-primary text-white border-transparent hover:opacity-90 glow-primary transition-opacity">
             <Plus className="mr-2 h-4 w-4" /> Novo Catálogo
           </Button>
         }
@@ -145,7 +145,7 @@ function CatalogRoute() {
               <p className="mb-6 text-muted-foreground max-w-sm">
                 Crie seu primeiro catálogo online para compartilhar com seus clientes
               </p>
-              <Button onClick={handleNewCatalog} className="bg-emerald-500 hover:bg-emerald-600">
+              <Button onClick={handleNewCatalog} className="gradient-primary text-white border-transparent hover:opacity-90 glow-primary transition-opacity">
                 <Plus className="mr-2 h-4 w-4" /> Criar Catálogo
               </Button>
             </Card>

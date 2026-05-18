@@ -421,10 +421,10 @@ export function NewProductModal({ open, onOpenChange, onCreate }: NewProductModa
               >
                 <span
                   className={`relative h-5 w-5 rounded-full border-2 transition-all flex items-center justify-center ${
-                    inCatalog ? "border-success bg-success/10" : "border-border"
+                    inCatalog ? "border-primary bg-primary/10" : "border-border"
                   }`}
                 >
-                  {inCatalog && <span className="h-2 w-2 rounded-full bg-success" />}
+                  {inCatalog && <span className="h-2 w-2 rounded-full bg-primary" />}
                 </span>
                 <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
                   <Store className="h-3.5 w-3.5 text-muted-foreground" />
@@ -453,7 +453,7 @@ export function NewProductModal({ open, onOpenChange, onCreate }: NewProductModa
                     >
                       <span
                         className={`relative min-w-5 h-5 rounded border transition-all flex items-center justify-center ${
-                          selectedCatalogIds.includes(cat.id) ? "border-success bg-success text-white" : "border-border"
+                          selectedCatalogIds.includes(cat.id) ? "border-primary bg-primary text-white" : "border-border"
                         }`}
                       >
                         {selectedCatalogIds.includes(cat.id) && <Check className="h-3 w-3" />}
@@ -478,7 +478,7 @@ export function NewProductModal({ open, onOpenChange, onCreate }: NewProductModa
           <button
             type="submit"
             onClick={submit}
-            className="h-9 px-5 rounded-lg bg-success text-white text-[13px] font-semibold hover:bg-success/90 transition shadow-sm"
+            className="h-9 px-5 rounded-lg gradient-primary text-white text-[13px] font-semibold hover:opacity-90 transition shadow-sm glow-primary border-transparent"
           >
             Cadastrar
           </button>

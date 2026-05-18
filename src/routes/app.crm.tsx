@@ -591,10 +591,7 @@ function CRMPage() {
                     </Button>
                     <Button 
                       type="submit"
-                      className={cn(
-                        "h-11 px-8 rounded-xl font-bold border-none",
-                        contactType === "customer" ? "bg-success hover:bg-success/90" : "bg-primary hover:bg-primary/90"
-                      )}
+                      className="h-11 px-8 rounded-xl font-bold border-transparent gradient-primary text-white glow-primary hover:opacity-90 transition-opacity"
                     >
                       {editingContact ? "Salvar Alterações" : "Cadastrar"}
                     </Button>

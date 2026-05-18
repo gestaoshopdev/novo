@@ -293,7 +293,7 @@ export function NewExpenseModal({ open, onOpenChange, editingExpense, showProduc
             <Button 
               type="submit" 
               disabled={isPending}
-              className="bg-success hover:bg-success/90 text-success-foreground px-8 h-11 font-bold shadow-lg shadow-success/20"
+              className="gradient-primary text-white px-8 h-11 font-bold shadow-lg glow-primary border-transparent hover:opacity-90 transition-opacity"
             >
               {isPending ? "Salvando..." : editingExpense ? "Salvar" : "Registrar Gasto"}
             </Button>
