@@ -2,9 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { getCatalogBySlug, getPublicCatalogProducts, getPublicProfile } from "@/lib/api";
 import { PLANS } from "@/lib/abacatepay";
-import { Store, Package, X, ChevronLeft, ChevronRight, Instagram } from "lucide-react";
+import { Store, Package, X, ChevronLeft, ChevronRight, Instagram, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -25,6 +25,8 @@ export const Route = createFileRoute("/ct/$slug")({
 function PublicCatalogPage() {
   const { slug } = Route.useParams();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const { data: catalog, isLoading: isCatalogLoading } = useQuery({
     queryKey: ["publicCatalog", slug],
@@ -36,6 +38,30 @@ function PublicCatalogPage() {
     queryFn: () => getPublicCatalogProducts(catalog!.id!),
     enabled: !!catalog?.id,
   });
+
+  const { data: profile } = useQuery({
+    queryKey: ["publicProfile", catalog?.user_id],
+    queryFn: () => getPublicProfile(catalog!.user_id!),
+    enabled: !!catalog?.user_id,
+  });
+
+  const categories = useMemo(() => {
+    if (!products) return [];
+    const cats = new Set<string>();
+    products.forEach((p: any) => {
+      if (p.category) cats.add(p.category);
+    });
+    return Array.from(cats).sort();
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    return products.filter((p: any) => {
+      const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === "all" || p.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [products, searchQuery, selectedCategory]);
 
   if (isCatalogLoading) {
     return (
@@ -54,12 +80,6 @@ function PublicCatalogPage() {
       </div>
     );
   }
-
-  const { data: profile } = useQuery({
-    queryKey: ["publicProfile", catalog?.user_id],
-    queryFn: () => getPublicProfile(catalog!.user_id!),
-    enabled: !!catalog?.user_id,
-  });
 
   const planId = (profile?.plan_type || "starter").toLowerCase() as keyof typeof PLANS;
   const currentPlanId = planId === 'básico' ? 'starter' : planId;
@@ -142,59 +162,114 @@ function PublicCatalogPage() {
             <h2 className="font-bold text-lg tracking-wider mb-6 opacity-90 text-center" style={{ color: colors.primary }}>
               MEUS PRODUTOS
             </h2>
-            <div className={`grid gap-4 md:gap-6 ${layout === "grid" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-1 md:grid-cols-2"}`}>
-              {products.map((product: any, idx: number) => (
-                <div 
-                  key={idx} 
-                  onClick={() => setSelectedProduct(product)}
-                  className={`cursor-pointer rounded-xl overflow-hidden shadow-sm border border-slate-200/10 flex ${layout === "list" ? "flex-row items-center h-32" : "flex-col"} transition-transform hover:-translate-y-1 hover:shadow-md`}
-                  style={{ backgroundColor: colors.card }}
-                >
-                  <div className={`${layout === "list" ? "w-32 h-full" : "w-full aspect-square"} bg-slate-100 flex items-center justify-center relative`}>
-                    {product.photo ? (
-                      <img src={product.photo} alt={product.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <Package className="w-10 h-10 text-slate-300" />
-                    )}
-                    {layout === "grid" && product.isNew && (
-                      <span className="absolute top-2 left-2 bg-black text-white text-[10px] px-2 py-0.5 rounded-full font-medium">Novo</span>
-                    )}
-                    {layout === "grid" && product.isPromo && (
-                      <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-medium">Promo</span>
-                    )}
-                  </div>
-                  
-                  <div className={`p-4 flex flex-col ${layout === "list" ? "flex-1 h-full justify-between" : "flex-1"}`}>
-                    <div>
-                      <h3 className="text-sm md:text-base font-medium mb-1 line-clamp-2" style={{ color: colors.text }}>
-                        {product.name}
-                      </h3>
-                      {product.category && layout === "list" && (
-                         <p className="text-xs opacity-60 mb-2" style={{ color: colors.text }}>{product.category}</p>
-                      )}
-                    </div>
-                    <div className={`${layout === "grid" ? "mt-auto pt-3" : "mt-auto"} flex items-center justify-between`}>
-                      <p className="font-bold text-base md:text-lg" style={{ color: colors.price }}>
-                        R$ {Number(product.price).toFixed(2).replace('.', ',')}
-                      </p>
-                    </div>
-                    {whatsapp && (
-                       <Button 
-                         className="w-full mt-3"
-                         size="sm"
-                         onClick={(e) => {
-                           e.stopPropagation();
-                           handleWhatsApp(product.name);
-                         }}
-                         style={{ backgroundColor: colors.button, color: '#fff' }}
-                       >
-                         Pedir no WhatsApp
-                       </Button>
-                    )}
+
+            {/* Filtros e Busca */}
+            <div className="mb-6 flex flex-col md:flex-row gap-4 items-center">
+              <div className="relative w-full md:w-auto flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input 
+                  type="text" 
+                  placeholder="Buscar produtos..." 
+                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-white/50 focus:outline-none focus:ring-2"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ borderColor: `${colors.primary}40`, color: colors.text }}
+                />
+              </div>
+              {categories.length > 0 && (
+                <div className="w-full md:w-auto overflow-x-auto pb-2 md:pb-0 hide-scrollbar">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSelectedCategory("all")}
+                      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors`}
+                      style={{ 
+                        backgroundColor: selectedCategory === "all" ? colors.primary : 'transparent',
+                        color: selectedCategory === "all" ? '#fff' : colors.text,
+                        border: `1px solid ${colors.primary}`
+                      }}
+                    >
+                      Todos
+                    </button>
+                    {categories.map(cat => (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors`}
+                        style={{ 
+                          backgroundColor: selectedCategory === cat ? colors.primary : 'transparent',
+                          color: selectedCategory === cat ? '#fff' : colors.text,
+                          border: `1px solid ${colors.primary}`
+                        }}
+                      >
+                        {cat}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
             </div>
+
+            {filteredProducts.length === 0 ? (
+              <div className="text-center p-12 rounded-xl" style={{ backgroundColor: colors.card }}>
+                <Package className="w-12 h-12 mx-auto mb-4 opacity-50" style={{ color: colors.text }} />
+                <h2 className="text-lg font-medium mb-2" style={{ color: colors.text }}>Nenhum produto encontrado</h2>
+                <p className="opacity-70" style={{ color: colors.text }}>Tente buscar com outros termos ou mude a categoria.</p>
+              </div>
+            ) : (
+              <div className={`grid gap-4 md:gap-6 ${layout === "grid" ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-1 md:grid-cols-2"}`}>
+                {filteredProducts.map((product: any, idx: number) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => setSelectedProduct(product)}
+                    className={`cursor-pointer rounded-xl overflow-hidden shadow-sm border border-slate-200/10 flex ${layout === "list" ? "flex-row items-center h-32" : "flex-col h-full"} transition-transform hover:-translate-y-1 hover:shadow-md`}
+                    style={{ backgroundColor: colors.card }}
+                  >
+                    <div className={`${layout === "list" ? "w-32 h-full flex-shrink-0" : "w-full aspect-square flex-shrink-0"} bg-slate-100 flex items-center justify-center relative overflow-hidden`}>
+                      {product.photo ? (
+                        <img src={product.photo} alt={product.name} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <Package className="w-10 h-10 text-slate-300" />
+                      )}
+                      {layout === "grid" && product.isNew && (
+                        <span className="absolute top-2 left-2 bg-black text-white text-[10px] px-2 py-0.5 rounded-full font-medium z-10">Novo</span>
+                      )}
+                      {layout === "grid" && product.isPromo && (
+                        <span className="absolute top-2 left-2 bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-medium z-10">Promo</span>
+                      )}
+                    </div>
+                    
+                    <div className={`p-4 flex flex-col ${layout === "list" ? "flex-1 h-full justify-between" : "flex-1"}`}>
+                      <div>
+                        <h3 className="text-sm md:text-base font-medium mb-1 line-clamp-2" style={{ color: colors.text }}>
+                          {product.name}
+                        </h3>
+                        {product.category && layout === "list" && (
+                           <p className="text-xs opacity-60 mb-2" style={{ color: colors.text }}>{product.category}</p>
+                        )}
+                      </div>
+                      <div className={`${layout === "grid" ? "mt-auto pt-3" : "mt-auto"} flex items-center justify-between`}>
+                        <p className="font-bold text-base md:text-lg" style={{ color: colors.price }}>
+                          R$ {Number(product.price).toFixed(2).replace('.', ',')}
+                        </p>
+                      </div>
+                      {whatsapp && (
+                         <Button 
+                           className="w-full mt-3"
+                           size="sm"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             handleWhatsApp(product.name);
+                           }}
+                           style={{ backgroundColor: colors.button, color: '#fff' }}
+                         >
+                           Pedir no WhatsApp
+                         </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

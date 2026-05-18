@@ -361,7 +361,8 @@ export async function getProducts(): Promise<ProductRow[]> {
     .from("products")
     .select(`
       *,
-      history:product_history(*)
+      history:product_history(*),
+      catalog_products(catalog_id)
     `)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
@@ -384,6 +385,7 @@ export async function getProducts(): Promise<ProductRow[]> {
     photo: p.photo,
     photos: p.photos || [],
     inCatalog: p.in_catalog,
+    catalogIds: p.catalog_products ? p.catalog_products.map((cp: any) => cp.catalog_id) : [],
     createdAt: p.created_at,
     history: (p.history || []).map((h: any) => ({
       id: h.id,
@@ -419,7 +421,7 @@ export async function createProduct(product: Omit<ProductRow, "history">, initia
     status: product.status,
     photo: processedMainPhoto,
     photos: processedPhotos,
-    in_catalog: product.inCatalog || false,
+    in_catalog: product.catalogIds ? product.catalogIds.length > 0 : (product.inCatalog || false),
     created_at: product.createdAt || new Date().toISOString(),
     user_id: userId,
   }]);
@@ -435,6 +437,16 @@ export async function createProduct(product: Omit<ProductRow, "history">, initia
       note: initialHistory.note || null,
     }]);
     if (hError) throw hError;
+  }
+
+  if (product.catalogIds && product.catalogIds.length > 0) {
+    const catalogEntries = product.catalogIds.map(catId => ({
+      catalog_id: catId,
+      product_sku: product.sku,
+      user_id: userId
+    }));
+    const { error: cError } = await supabase.from("catalog_products").insert(catalogEntries);
+    if (cError) throw cError;
   }
 }
 
@@ -466,7 +478,12 @@ export async function updateProduct(sku: string, updates: Partial<ProductRow>, n
   if (updates.purchaseDate !== undefined) dbUpdates.purchase_date = updates.purchaseDate || null;
   if (updates.margin !== undefined) dbUpdates.margin = updates.margin || 0;
   if (updates.status !== undefined) dbUpdates.status = updates.status;
-  if (updates.inCatalog !== undefined) dbUpdates.in_catalog = updates.inCatalog;
+  
+  if (updates.catalogIds !== undefined) {
+    dbUpdates.in_catalog = updates.catalogIds.length > 0;
+  } else if (updates.inCatalog !== undefined) {
+    dbUpdates.in_catalog = updates.inCatalog;
+  }
 
   const { error } = await supabase.from("products").update(dbUpdates).eq("sku", sku).eq("user_id", userId);
   if (error) throw error;
@@ -480,6 +497,19 @@ export async function updateProduct(sku: string, updates: Partial<ProductRow>, n
       note: newHistory.note || null,
     }]);
     if (hError) throw hError;
+  }
+
+  if (updates.catalogIds !== undefined) {
+    await supabase.from("catalog_products").delete().eq("product_sku", sku).eq("user_id", userId);
+    if (updates.catalogIds.length > 0) {
+      const catalogEntries = updates.catalogIds.map(catId => ({
+        catalog_id: catId,
+        product_sku: sku,
+        user_id: userId
+      }));
+      const { error: cError } = await supabase.from("catalog_products").insert(catalogEntries);
+      if (cError) throw cError;
+    }
   }
 }
 
@@ -917,6 +947,16 @@ export async function getCatalogBySlug(slug: string): Promise<any | null> {
   
   if (data) {
     data.banner_image = data.colors?.banner_image;
+    data.colors = data.colors || {
+      background: "#0F172A",
+      primary: "#10B981",
+      card: "#FFFFFF",
+      text: "#111827",
+      price: "#10B981",
+      button: "#10B981",
+    };
+    data.layout = data.layout || "grid";
+    data.show_brand = data.show_brand !== false;
   }
   
   return data;

@@ -102,6 +102,18 @@ export const useRestoreDefaultCategories = () => {
 };
 
 // ==========================================
+// CATÁLOGOS
+// ==========================================
+export const useCatalogs = () => {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["catalogs", user?.id],
+    queryFn: api.getCatalogs,
+    enabled: !!user,
+  });
+};
+
+// ==========================================
 // PRODUTOS
 // ==========================================
 export const useProducts = () => {
@@ -119,6 +131,7 @@ export const useCreateProduct = () => {
     mutationFn: ({ product, history }: { product: any; history?: any }) => api.createProduct(product, history),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["catalogProducts"] });
     },
   });
 };
@@ -130,6 +143,7 @@ export const useUpdateProduct = () => {
       api.updateProduct(sku, updates, history),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["catalogProducts"] });
     },
   });
 };
@@ -140,6 +154,7 @@ export const useDeleteProduct = () => {
     mutationFn: api.deleteProduct,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["catalogProducts"] });
     },
   });
 };

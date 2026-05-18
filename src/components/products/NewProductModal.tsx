@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, X, ImageIcon, Store, Calendar as CalendarIcon } from "lucide-react";
+import { Upload, X, ImageIcon, Store, Calendar as CalendarIcon, Check } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar } from "@/components/ui/calendar";
@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { useCategories } from "@/hooks/useQueries";
+import { useCategories, useCatalogs } from "@/hooks/useQueries";
 import { CategoryIcon } from "@/components/shared/CategoryIcon";
 import { useProfile } from "@/contexts/ProfileContext";
 import { PLANS } from "@/lib/abacatepay";
@@ -37,6 +37,7 @@ export type NewProduct = {
   supplier: string;
   purchaseDate: string;
   inCatalog: boolean;
+  catalogIds: string[];
   photos: string[];
 };
 
@@ -61,10 +62,12 @@ export function NewProductModal({ open, onOpenChange, onCreate }: NewProductModa
   const [supplier, setSupplier] = useState("");
   const [purchaseDate, setPurchaseDate] = useState<Date | undefined>(new Date());
   const [inCatalog, setInCatalog] = useState(false);
+  const [selectedCatalogIds, setSelectedCatalogIds] = useState<string[]>([]);
   const [photos, setPhotos] = useState<string[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { data: categories = [] } = useCategories();
+  const { data: catalogs = [] } = useCatalogs();
   const { plan } = useProfile();
 
   const currentPlanId = (plan.toLowerCase() === 'básico' ? 'starter' : plan.toLowerCase()) as keyof typeof PLANS;
@@ -83,6 +86,7 @@ export function NewProductModal({ open, onOpenChange, onCreate }: NewProductModa
         setSupplier("");
         setPurchaseDate(new Date());
         setInCatalog(false);
+        setSelectedCatalogIds([]);
         setPhotos([]);
       }, 200);
     }
@@ -182,7 +186,8 @@ export function NewProductModal({ open, onOpenChange, onCreate }: NewProductModa
       wholesalePrice: wp,
       supplier: supplier.trim(),
       purchaseDate: purchaseDate?.toISOString() || "",
-      inCatalog,
+      inCatalog: selectedCatalogIds.length > 0 ? true : inCatalog,
+      catalogIds: selectedCatalogIds,
       photos,
     });
   };
@@ -400,23 +405,65 @@ export function NewProductModal({ open, onOpenChange, onCreate }: NewProductModa
           </Field>
 
           <div className="border-t border-border pt-4">
-            <button
-              type="button"
-              onClick={() => setInCatalog((v) => !v)}
-              className="flex items-center gap-3 group"
-            >
-              <span
-                className={`relative h-5 w-5 rounded-full border-2 transition-all flex items-center justify-center ${
-                  inCatalog ? "border-success bg-success/10" : "border-border"
-                }`}
+            {catalogs.length <= 1 ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const newState = !inCatalog;
+                  setInCatalog(newState);
+                  if (newState && catalogs.length === 1) {
+                    setSelectedCatalogIds([catalogs[0].id]);
+                  } else {
+                    setSelectedCatalogIds([]);
+                  }
+                }}
+                className="flex items-center gap-3 group"
               >
-                {inCatalog && <span className="h-2 w-2 rounded-full bg-success" />}
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
-                <Store className="h-3.5 w-3.5 text-muted-foreground" />
-                Adicionar ao catálogo
-              </span>
-            </button>
+                <span
+                  className={`relative h-5 w-5 rounded-full border-2 transition-all flex items-center justify-center ${
+                    inCatalog ? "border-success bg-success/10" : "border-border"
+                  }`}
+                >
+                  {inCatalog && <span className="h-2 w-2 rounded-full bg-success" />}
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
+                  <Store className="h-3.5 w-3.5 text-muted-foreground" />
+                  Adicionar ao catálogo
+                </span>
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-1.5 text-[13px] font-medium">
+                  <Store className="h-3.5 w-3.5 text-muted-foreground" />
+                  Adicionar aos catálogos:
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {catalogs.map(cat => (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCatalogIds(prev => {
+                          const next = prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id];
+                          setInCatalog(next.length > 0);
+                          return next;
+                        });
+                      }}
+                      className="flex items-center gap-3 p-2 rounded-lg border border-border hover:border-primary/50 transition-all text-left bg-surface/30"
+                    >
+                      <span
+                        className={`relative min-w-5 h-5 rounded border transition-all flex items-center justify-center ${
+                          selectedCatalogIds.includes(cat.id) ? "border-success bg-success text-white" : "border-border"
+                        }`}
+                      >
+                        {selectedCatalogIds.includes(cat.id) && <Check className="h-3 w-3" />}
+                      </span>
+                      <span className="text-[12px] font-medium line-clamp-1">{cat.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </form>
 
