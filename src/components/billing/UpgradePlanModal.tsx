@@ -13,6 +13,21 @@ interface UpgradePlanModalProps {
 
 export function UpgradePlanModal({ open, onOpenChange }: UpgradePlanModalProps) {
   const [loading, setLoading] = useState<string | null>(null);
+  const [discount, setDiscount] = useState<number>(0);
+
+  useEffect(() => {
+    async function fetchDiscount() {
+      if (!open) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase.rpc('get_user_referral_discount', { p_user_id: user.id });
+        if (data && typeof data === 'number') {
+          setDiscount(data);
+        }
+      }
+    }
+    fetchDiscount();
+  }, [open]);
 
   const handleSubscribe = async (planId: keyof typeof PLANS) => {
     if (loading) return;
@@ -96,7 +111,13 @@ export function UpgradePlanModal({ open, onOpenChange }: UpgradePlanModalProps) 
                 <Sparkles className="h-6 w-6 text-white" />
               </div>
               <h2 className="text-2xl font-bold tracking-tight">Faça o Upgrade do seu Plano</h2>
-              <p className="text-muted-foreground">Escolha o melhor plano para escalar suas operações e decole suas vendas.</p>
+              {discount > 0 ? (
+                <p className="text-green-500 font-medium bg-green-500/10 py-1.5 px-4 rounded-full inline-block mt-2 shadow-sm border border-green-500/20">
+                  🎉 Parabéns! Você ganhou {Math.round(discount * 100)}% de desconto na sua primeira mensalidade!
+                </p>
+              ) : (
+                <p className="text-muted-foreground">Escolha o melhor plano para escalar suas operações e decole suas vendas.</p>
+              )}
             </div>
 
             <div className="p-8 grid gap-6 md:grid-cols-3 bg-muted/20">
@@ -123,8 +144,19 @@ export function UpgradePlanModal({ open, onOpenChange }: UpgradePlanModalProps) 
 
                   <div className="mb-6 flex items-baseline text-foreground">
                     <span className="text-2xl font-bold tracking-tight">R$</span>
-                    <span className="text-4xl font-black tracking-tight ml-1">{plan.price}</span>
-                    <span className="text-sm font-medium text-muted-foreground ml-1">/mês</span>
+                    {discount > 0 ? (
+                      <div className="flex flex-col ml-1 items-start justify-center">
+                        <span className="text-lg font-medium text-muted-foreground line-through decoration-red-500/50 decoration-2 -mb-1">
+                          {plan.price}
+                        </span>
+                        <span className="text-4xl font-black tracking-tight text-green-500 drop-shadow-sm">
+                          {((PLANS[plan.id].priceCentavos * (1 - discount)) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-4xl font-black tracking-tight ml-1">{plan.price}</span>
+                    )}
+                    <span className="text-sm font-medium text-muted-foreground ml-1">{discount > 0 ? "/1º mês" : "/mês"}</span>
                   </div>
 
                   <ul className="space-y-3 mb-8 flex-1">

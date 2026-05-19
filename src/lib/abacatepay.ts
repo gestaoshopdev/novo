@@ -46,6 +46,7 @@ export const PLANS = {
 // Server function para criar o faturamento
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { createClient } from "@supabase/supabase-js";
 
 export const createUpgradeBilling = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({
@@ -65,11 +66,39 @@ export const createUpgradeBilling = createServerFn({ method: "POST" })
       "Content-Type": "application/json"
     };
 
+    let discountPercentage = 0;
     try {
-      console.log(`[Server] Criando cobrança para o plano: ${data.planId}`);
+      const supabase = createClient(
+        (typeof process !== 'undefined' && process.env.VITE_SUPABASE_URL) || "https://ylsdljylqbnuajjyipwy.supabase.co",
+        (typeof process !== 'undefined' && process.env.VITE_SUPABASE_ANON_KEY) || "sb_publishable_nqdrO05frnjf0uatCInaNQ_KQQYbOry"
+      );
+      const { data: discountData, error: discountError } = await supabase.rpc('get_user_referral_discount', {
+        p_user_id: data.userId
+      });
+      if (!discountError && typeof discountData === 'number') {
+        discountPercentage = discountData;
+      }
+    } catch (e) {
+      console.error("[AbacatePay] Erro ao buscar desconto de indicação", e);
+    }
+
+    const finalPriceCentavos = discountPercentage > 0 
+      ? Math.round(plan.priceCentavos * (1 - discountPercentage)) 
+      : plan.priceCentavos;
+
+    const externalId = discountPercentage > 0 
+      ? `${data.planId}-discount-${Math.round(discountPercentage * 100)}` 
+      : data.planId;
+
+    const productName = discountPercentage > 0 
+      ? `Plano ${plan.name} (1º Mês Promo)`
+      : `Plano ${plan.name}`;
+
+    try {
+      console.log(`[Server] Criando cobrança para o plano: ${data.planId} | Desconto: ${discountPercentage * 100}% | Novo valor: ${finalPriceCentavos}`);
       let productId = "";
       
-      const getRes = await fetch(`https://api.abacatepay.com/v2/products/get?externalId=${data.planId}`, { headers });
+      const getRes = await fetch(`https://api.abacatepay.com/v2/products/get?externalId=${externalId}`, { headers });
       if (getRes.ok) {
         const productData = await getRes.json();
         if (productData.data) productId = productData.data.id;
@@ -80,10 +109,10 @@ export const createUpgradeBilling = createServerFn({ method: "POST" })
           method: "POST",
           headers,
           body: JSON.stringify({
-            externalId: data.planId,
-            name: `Plano ${plan.name}`,
+            externalId: externalId,
+            name: productName,
             description: plan.description,
-            price: plan.priceCentavos,
+            price: finalPriceCentavos,
             currency: 'BRL'
           })
         });
