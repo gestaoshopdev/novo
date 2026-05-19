@@ -20,9 +20,12 @@ export const Route = createFileRoute("/app/referral")({
 });
 
 function ReferralPage() {
-  const { plan } = useProfile();
+  const { plan, name } = useProfile();
   const { user } = useAuth();
   
+  const cleanName = (name.split(' ')[0] || "SEUNOME").toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const exampleCode = `${cleanName}10`;
+
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [referralCode, setReferralCode] = useState<ReferralCode | null>(null);
   const [commissions, setCommissions] = useState<Commission[]>([]);
@@ -164,7 +167,7 @@ function ReferralPage() {
       {!referralCode ? (
         <div className="bg-card border border-border rounded-2xl p-8 max-w-2xl">
           <h3 className="text-xl font-bold mb-2">Crie seu código de parceiro</h3>
-          <p className="text-muted-foreground mb-6">Escolha um código único que será usado nos seus links de indicação. Ex: GUSTAVO10</p>
+          <p className="text-muted-foreground mb-6">Escolha um código único que será usado nos seus links de indicação. Ex: {exampleCode}</p>
           
           <div className="flex items-end gap-4">
             <div className="space-y-2 flex-1">

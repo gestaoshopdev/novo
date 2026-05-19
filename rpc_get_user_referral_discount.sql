@@ -21,6 +21,12 @@ BEGIN
     RETURN 0;
   END IF;
 
+  -- 1.5 Verificar se o usuário já assinou um plano antes (se já possui plan_expiry)
+  -- Se já assinou, ele não tem mais direito ao desconto de primeira mensalidade.
+  IF (SELECT raw_user_meta_data->>'plan_expiry' FROM auth.users WHERE id = p_user_id) IS NOT NULL THEN
+    RETURN 0;
+  END IF;
+
   -- 2. Buscar o plano do indicador
   SELECT plan_type INTO v_referrer_plan
   FROM public.profiles
