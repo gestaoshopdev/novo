@@ -74,7 +74,7 @@ export function CatalogPreview({ settings, mode, onModeChange }: CatalogPreviewP
         <div className="h-full overflow-y-auto no-scrollbar relative flex flex-col">
           {/* Header do Catálogo */}
           <div 
-            className="pt-8 pb-6 px-6 flex flex-col items-center text-center relative overflow-hidden" 
+            className="pt-8 pb-6 px-6 shrink-0 flex flex-col items-center text-center relative overflow-hidden" 
             style={{ 
               backgroundColor: settings.colors.primary,
               backgroundImage: settings.banner_image ? `url(${settings.banner_image})` : undefined,
@@ -86,9 +86,9 @@ export function CatalogPreview({ settings, mode, onModeChange }: CatalogPreviewP
             
             <div className="relative z-10 flex flex-col items-center w-full">
               {settings.profile_photo ? (
-                <img src={settings.profile_photo} alt="Profile" className="w-16 h-16 rounded-full object-cover mb-3 border-2 border-white/20 shadow-lg" />
+                <img src={settings.profile_photo} alt="Profile" className="w-16 h-16 shrink-0 rounded-full object-cover mb-3 border-2 border-white/20 shadow-lg" />
               ) : (
-                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center mb-3 shadow-lg backdrop-blur-sm">
+                <div className="w-16 h-16 shrink-0 rounded-full bg-white/20 flex items-center justify-center mb-3 shadow-lg backdrop-blur-sm">
                   <Store className="w-8 h-8 text-white" />
                 </div>
               )}
@@ -104,7 +104,7 @@ export function CatalogPreview({ settings, mode, onModeChange }: CatalogPreviewP
           </div>
 
           {settings.banner_text && (
-            <div className="bg-white/10 backdrop-blur-sm mx-4 mt-[-12px] relative z-10 py-2 px-4 rounded-lg text-center shadow-sm" style={{ backgroundColor: `${settings.colors.primary}dd` }}>
+            <div className="bg-white/10 shrink-0 backdrop-blur-sm mx-4 mt-[-12px] relative z-10 py-2 px-4 rounded-lg text-center shadow-sm" style={{ backgroundColor: `${settings.colors.primary}dd` }}>
               <p className="text-xs font-medium text-white">{settings.banner_text}</p>
             </div>
           )}

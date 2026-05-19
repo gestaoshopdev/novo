@@ -87,7 +87,7 @@ function PaymentsPage() {
               setEditingMethod(null);
               setNewModalOpen(true);
             }}
-            className="bg-success hover:bg-success/90 text-success-foreground gap-2 font-bold shadow-lg shadow-success/20"
+            className="gradient-primary text-white gap-2 font-bold shadow-lg glow-primary border-transparent hover:opacity-90 transition-opacity"
           >
             <Plus className="h-4 w-4" /> Novo Método
           </Button>

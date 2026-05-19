@@ -365,7 +365,7 @@ function SalesPage() {
         actions={
           <Button
             onClick={() => setRegisterOpen(true)}
-            className="bg-success hover:bg-success/90 text-success-foreground font-semibold shadow-lg shadow-success/20"
+            className="gradient-primary text-white font-semibold shadow-lg glow-primary border-transparent hover:opacity-90 transition-opacity"
           >
             <Plus className="h-4 w-4 mr-1.5" /> Nova Venda
           </Button>

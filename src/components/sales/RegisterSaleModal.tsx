@@ -419,7 +419,7 @@ export function RegisterSaleModal({
           <Button 
             onClick={handleSubmit} 
             disabled={isSubmitting}
-            className="bg-success hover:bg-success/90 text-success-foreground font-semibold"
+            className="gradient-primary text-white font-semibold glow-primary border-transparent hover:opacity-90 transition-opacity"
           >
             {isSubmitting ? "Registrando..." : "Registrar Venda"}
           </Button>

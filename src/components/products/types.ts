@@ -24,6 +24,7 @@ export type ProductRow = {
   photo?: string;
   photos?: string[];
   inCatalog?: boolean;
+  catalogIds?: string[];
   history?: StockMovement[];
   createdAt?: string;
 };

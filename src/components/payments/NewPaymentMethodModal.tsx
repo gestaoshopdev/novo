@@ -188,7 +188,7 @@ export function NewPaymentMethodModal({ open, onOpenChange, editingMethod }: Pro
             <Button 
               type="submit" 
               disabled={isPending}
-              className="bg-success hover:bg-success/90 text-success-foreground px-8 h-11 font-bold shadow-lg shadow-success/20"
+              className="gradient-primary text-white px-8 h-11 font-bold shadow-lg glow-primary border-transparent hover:opacity-90 transition-opacity"
             >
               {isPending ? (editingMethod ? "Salvando..." : "Cadastrando...") : (editingMethod ? "Salvar Alterações" : "Cadastrar")}
             </Button>

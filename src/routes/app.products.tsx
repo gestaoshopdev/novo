@@ -153,6 +153,7 @@ function ProductsPage() {
       photo: data.photos[0],
       photos: data.photos,
       inCatalog: data.inCatalog,
+      catalogIds: data.catalogIds,
       createdAt: new Date().toISOString(),
       history: [],
     };
