@@ -29,6 +29,7 @@ function ReferralPage() {
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const [referralCode, setReferralCode] = useState<ReferralCode | null>(null);
   const [commissions, setCommissions] = useState<Commission[]>([]);
+  const [payoutRequests, setPayoutRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Create code state
@@ -60,6 +61,9 @@ function ReferralPage() {
       
       const comms = await getCommissions(user.id);
       setCommissions(comms);
+      
+      const payouts = await getPayoutRequests(user.id);
+      setPayoutRequests(payouts);
     } catch (e) {
       console.error("Erro ao buscar dados de afiliado", e);
     } finally {
@@ -313,6 +317,59 @@ function ReferralPage() {
                             {c.status === 'available' ? 'Disponível' :
                              c.status === 'pending' ? 'Pendente' :
                              c.status === 'withdrawn' ? 'Sacado' : 'Cancelado'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Tabela de Histórico de Saques */}
+          <div className="bg-card border border-border rounded-2xl overflow-hidden mt-6">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h3 className="font-bold text-lg">Histórico de Saques</h3>
+            </div>
+            {payoutRequests.length === 0 ? (
+              <div className="p-12 text-center text-muted-foreground">
+                <Wallet className="h-12 w-12 mx-auto opacity-20 mb-3" />
+                <p>Nenhuma solicitação de saque ainda.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                  <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border">
+                    <tr>
+                      <th className="px-6 py-4 font-medium">Data</th>
+                      <th className="px-6 py-4 font-medium">Valor</th>
+                      <th className="px-6 py-4 font-medium">Comprovante</th>
+                      <th className="px-6 py-4 font-medium text-right">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payoutRequests.map((p) => (
+                      <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20">
+                        <td className="px-6 py-4">{new Date(p.created_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-4 font-bold">{formatBRL(p.amount_cents / 100)}</td>
+                        <td className="px-6 py-4">
+                          {p.receipt_url ? (
+                            <a href={p.receipt_url} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
+                              Ver Comprovante
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Aguardando</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            p.status === 'paid' ? 'bg-success/20 text-success' :
+                            p.status === 'requested' ? 'bg-blue-500/20 text-blue-500' :
+                            'bg-red-500/20 text-red-500'
+                          }`}>
+                            {p.status === 'paid' ? 'Pago' :
+                             p.status === 'requested' ? 'Pendente' : 'Rejeitado'}
                           </span>
                         </td>
                       </tr>
