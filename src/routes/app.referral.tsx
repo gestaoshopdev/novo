@@ -20,7 +20,7 @@ export const Route = createFileRoute("/app/referral")({
 });
 
 function ReferralPage() {
-  const { plan, name } = useProfile();
+  const { plan, planStatus, name } = useProfile();
   const { user } = useAuth();
   
   const cleanName = (name.split(' ')[0] || "SEUNOME").toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -42,12 +42,12 @@ function ReferralPage() {
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
 
   useEffect(() => {
-    if (user && (plan === "Pro" || plan === "Elite")) {
+    if (user && (plan === "Pro" || plan === "Elite") && planStatus !== "trial") {
       fetchData();
     } else {
       setLoading(false);
     }
-  }, [user, plan]);
+  }, [user, plan, planStatus]);
 
   const fetchData = async () => {
     if (!user) return;
@@ -122,8 +122,8 @@ function ReferralPage() {
     );
   }
 
-  // Se for Starter, mostra tela de bloqueio
-  if (plan === "Starter" || !plan) {
+  // Se for Starter ou plano em teste, mostra tela de bloqueio
+  if (plan === "Starter" || !plan || planStatus === "trial") {
     return (
       <div className="space-y-6">
         <PageHeader title="Indique e Ganhe" subtitle="Programa de indicação para parceiros Atlas Suite." icon={Gift} />
@@ -138,9 +138,9 @@ function ReferralPage() {
               <Gift className="h-8 w-8 text-primary" />
             </div>
             
-            <h2 className="text-3xl font-bold tracking-tight">Recurso Exclusivo para Planos Pro e Elite</h2>
+            <h2 className="text-3xl font-bold tracking-tight">Recurso Exclusivo para Assinantes Ativos</h2>
             <p className="text-muted-foreground text-lg">
-              Faça upgrade do seu plano para liberar seu Link de Indicação Exclusivo. 
+              Ative sua assinatura (Pro ou Elite) para liberar seu Link de Indicação Exclusivo. 
               Ganhe 10% (Pro) ou 20% (Elite) de comissão recorrente por cada amigo indicado!
             </p>
             
