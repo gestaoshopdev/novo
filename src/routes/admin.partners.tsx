@@ -12,6 +12,7 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/partners")({
   head: () => ({ meta: [{ title: "Parceiros · Admin" }] }),
@@ -25,7 +26,8 @@ function AdminPartners() {
   const [loading, setLoading] = useState(true);
   
   const [selectedPayout, setSelectedPayout] = useState<any>(null);
-  const [receiptUrl, setReceiptUrl] = useState("");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   
   const [managePartnerOpen, setManagePartnerOpen] = useState(false);
   const [selectedPartnerDetails, setSelectedPartnerDetails] = useState<any>(null);
@@ -70,19 +72,37 @@ function AdminPartners() {
   };
 
   const handleMarkAsPaid = async () => {
-    if (!selectedPayout || !receiptUrl) {
-      toast.error("Insira a URL do comprovante");
+    if (!selectedPayout || !receiptFile) {
+      toast.error("Selecione o arquivo do comprovante");
       return;
     }
     
+    setIsUploading(true);
     try {
-      await markPayoutAsPaid(selectedPayout.id, receiptUrl);
+      const fileExt = receiptFile.name.split('.').pop();
+      const fileName = `${selectedPayout.id}-${Math.random()}.${fileExt}`;
+      const filePath = `receipts/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('payouts')
+        .upload(filePath, receiptFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage
+        .from('payouts')
+        .getPublicUrl(filePath);
+
+      await markPayoutAsPaid(selectedPayout.id, publicUrlData.publicUrl);
       toast.success("Saque marcado como pago com sucesso!");
       setSelectedPayout(null);
-      setReceiptUrl("");
+      setReceiptFile(null);
       fetchData();
-    } catch (e) {
-      toast.error("Erro ao processar pagamento");
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Erro ao processar pagamento: ${e.message}`);
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -255,16 +275,17 @@ function AdminPartners() {
               </div>
 
               <div className="space-y-2">
-                <Label>Link do Comprovante</Label>
+                <Label>Comprovante (Imagem ou PDF)</Label>
                 <Input 
-                  placeholder="https://sua-hospedagem.com/comprovante.jpg" 
-                  value={receiptUrl} 
-                  onChange={e => setReceiptUrl(e.target.value)} 
+                  type="file" 
+                  accept="image/*,application/pdf"
+                  onChange={e => setReceiptFile(e.target.files?.[0] || null)} 
                 />
               </div>
 
-              <Button onClick={handleMarkAsPaid} className="w-full font-bold bg-success hover:bg-success/90 text-success-foreground">
-                <Check className="w-4 h-4 mr-2" /> Marcar como Pago
+              <Button onClick={handleMarkAsPaid} disabled={isUploading} className="w-full font-bold bg-success hover:bg-success/90 text-success-foreground">
+                {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Check className="w-4 h-4 mr-2" />} 
+                {isUploading ? "Enviando e Marcando..." : "Marcar como Pago"}
               </Button>
             </div>
           )}

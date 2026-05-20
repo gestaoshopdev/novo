@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
-import { getReferralCode, createReferralCode, getCommissions, getPayoutRequests, Commission, ReferralCode } from "@/lib/referrals";
+import { getReferralCode, createReferralCode, getCommissions, getPayoutRequests, requestPayout, Commission, ReferralCode } from "@/lib/referrals";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -103,8 +103,9 @@ function ReferralPage() {
       setPayoutModalOpen(false);
       setPixKey("");
       fetchData(); // reload
-    } catch (e) {
-      toast.error("Erro ao solicitar saque.");
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Erro ao solicitar saque: ${e?.message || JSON.stringify(e)}`);
     } finally {
       setIsRequestingPayout(false);
     }
