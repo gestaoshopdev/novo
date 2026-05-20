@@ -169,6 +169,7 @@ function AdminPartners() {
                       <span className="text-xs text-muted-foreground">{p.user?.email}</span>
                     </td>
                     <td className="px-6 py-4">
+                      <div className="font-medium text-xs mb-1">{p.pix_name || 'Não informado'}</div>
                       <span className="font-mono bg-muted px-2 py-1 rounded select-all">{p.pix_key}</span>
                       <div className="text-xs text-muted-foreground mt-1 uppercase">{p.pix_type}</div>
                     </td>
@@ -263,6 +264,10 @@ function AdminPartners() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Valor:</span>
                   <span className="font-bold text-xl">{formatBRL(selectedPayout.amount_cents / 100)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Nome:</span>
+                  <span className="font-bold">{selectedPayout.pix_name || 'Não informado'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Chave PIX:</span>

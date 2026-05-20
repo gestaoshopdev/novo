@@ -37,6 +37,7 @@ function ReferralPage() {
 
   // Payout state
   const [payoutModalOpen, setPayoutModalOpen] = useState(false);
+  const [pixName, setPixName] = useState("");
   const [pixKey, setPixKey] = useState("");
   const [simulatedBalance, setSimulatedBalance] = useState(0);
   const [pixType, setPixType] = useState("cpf");
@@ -95,13 +96,14 @@ function ReferralPage() {
   };
 
   const handleRequestPayout = async () => {
-    if (!user || !pixKey) return;
+    if (!user || !pixKey || !pixName) return;
     setIsRequestingPayout(true);
     try {
-      await requestPayout(user.id, Math.floor(availableAmount * 100), pixKey, pixType);
+      await requestPayout(user.id, Math.floor(availableAmount * 100), pixName, pixKey, pixType);
       toast.success("Solicitação de saque enviada! O pagamento será realizado em até 48 horas.", { duration: 5000 });
       setPayoutModalOpen(false);
       setPixKey("");
+      setPixName("");
       fetchData(); // reload
     } catch (e: any) {
       console.error(e);
@@ -355,11 +357,19 @@ function ReferralPage() {
                     onChange={e => setPixKey(e.target.value)} 
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Nome Completo do Titular</Label>
+                  <Input 
+                    placeholder="Nome igual ao cadastrado no banco" 
+                    value={pixName} 
+                    onChange={e => setPixName(e.target.value)} 
+                  />
+                </div>
               </div>
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setPayoutModalOpen(false)}>Cancelar</Button>
-                <Button onClick={handleRequestPayout} disabled={isRequestingPayout || !pixKey} className="bg-success text-success-foreground hover:bg-success/90 font-bold">
+                <Button onClick={handleRequestPayout} disabled={isRequestingPayout || !pixKey || !pixName} className="bg-success text-success-foreground hover:bg-success/90 font-bold">
                   Confirmar Saque
                 </Button>
               </DialogFooter>

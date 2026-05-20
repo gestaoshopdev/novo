@@ -21,6 +21,7 @@ export interface PayoutRequest {
   id: string;
   user_id: string;
   amount_cents: number;
+  pix_name: string;
   pix_key: string;
   pix_type: string;
   status: 'requested' | 'paid' | 'rejected';
@@ -91,10 +92,10 @@ export async function getPayoutRequests(userId: string) {
   return data as PayoutRequest[];
 }
 
-export async function requestPayout(userId: string, amount_cents: number, pix_key: string, pix_type: string) {
+export async function requestPayout(userId: string, amount_cents: number, pix_name: string, pix_key: string, pix_type: string) {
   const { data, error } = await supabase
     .from('payout_requests')
-    .insert([{ user_id: userId, amount_cents, pix_key, pix_type, status: 'requested' }])
+    .insert([{ user_id: userId, amount_cents, pix_name, pix_key, pix_type, status: 'requested' }])
     .select()
     .single();
 
