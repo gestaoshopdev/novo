@@ -38,6 +38,7 @@ function ReferralPage() {
   // Payout state
   const [payoutModalOpen, setPayoutModalOpen] = useState(false);
   const [pixKey, setPixKey] = useState("");
+  const [simulatedBalance, setSimulatedBalance] = useState(0);
   const [pixType, setPixType] = useState("cpf");
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
 
@@ -110,7 +111,8 @@ function ReferralPage() {
   };
 
   const pendingAmount = commissions.filter(c => c.status === 'pending').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
-  const availableAmount = commissions.filter(c => c.status === 'available').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
+  const baseAvailableAmount = commissions.filter(c => c.status === 'available').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
+  const availableAmount = baseAvailableAmount + simulatedBalance;
   const withdrawnAmount = commissions.filter(c => c.status === 'withdrawn').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
 
   if (loading) {
@@ -225,6 +227,15 @@ function ReferralPage() {
               <Button onClick={() => setPayoutModalOpen(true)} disabled={availableAmount < 30} className="w-full font-bold h-11 bg-success hover:bg-success/90 text-success-foreground">
                 Solicitar Saque (Min. R$ 30)
               </Button>
+              {user?.email === 'jcasales15@gmail.com' && (
+                <Button 
+                  onClick={() => setSimulatedBalance(50)} 
+                  variant="outline" 
+                  className="w-full text-xs h-8 mt-2 border-dashed border-primary text-primary"
+                >
+                  (Teste) Carregar Saldo de R$ 50
+                </Button>
+              )}
             </div>
           </div>
 
