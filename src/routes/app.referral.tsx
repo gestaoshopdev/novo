@@ -98,7 +98,7 @@ function ReferralPage() {
     setIsRequestingPayout(true);
     try {
       await requestPayout(user.id, Math.floor(availableAmount * 100), pixKey, pixType);
-      toast.success("Solicitação de saque enviada com sucesso!");
+      toast.success("Solicitação de saque enviada! O pagamento será realizado em até 48 horas.", { duration: 5000 });
       setPayoutModalOpen(false);
       setPixKey("");
       fetchData(); // reload
@@ -316,7 +316,7 @@ function ReferralPage() {
                 <DialogTitle>Solicitar Saque PIX</DialogTitle>
                 <DialogDescription>
                   Você está solicitando o saque de <strong>{formatBRL(availableAmount)}</strong>.
-                  O valor será transferido para a chave informada em até 3 dias úteis.
+                  O valor será transferido para a chave informada em até 48 horas.
                 </DialogDescription>
               </DialogHeader>
 
