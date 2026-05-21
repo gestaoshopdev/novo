@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Gift, Lock, Copy, Share2, DollarSign, TrendingUp, Users, ArrowRight, Wallet, CheckCircle2, Clock } from "lucide-react";
+import { Gift, Lock, Copy, Share2, DollarSign, TrendingUp, Users, ArrowRight, Wallet, CheckCircle2, Clock, Hourglass, Eye, AlertCircle, FileText, ExternalLink } from "lucide-react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,6 +43,7 @@ function ReferralPage() {
   const [simulatedBalance, setSimulatedBalance] = useState(0);
   const [pixType, setPixType] = useState("cpf");
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
+  const [selectedPayoutDetails, setSelectedPayoutDetails] = useState<any>(null);
 
   useEffect(() => {
     if (user && (plan === "Pro" || plan === "Elite") && planStatus !== "trial") {
@@ -119,7 +120,8 @@ function ReferralPage() {
 
   const pendingAmount = commissions.filter(c => c.status === 'pending').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
   const baseAvailableAmount = commissions.filter(c => c.status === 'available').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
-  const availableAmount = baseAvailableAmount + simulatedBalance;
+  const processingPayoutsAmount = payoutRequests.filter(p => p.status === 'requested').reduce((acc, p) => acc + p.amount_cents, 0) / 100;
+  const availableAmount = Math.max(0, baseAvailableAmount - processingPayoutsAmount + simulatedBalance);
   const withdrawnAmount = commissions.filter(c => c.status === 'withdrawn').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
 
   if (loading) {
@@ -247,14 +249,24 @@ function ReferralPage() {
           </div>
 
           {/* Cards de Métricas */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <Clock className="h-5 w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground font-medium">Saldo Pendente (Em carência)</p>
+                <p className="text-sm text-muted-foreground font-medium">Saldo Pendente</p>
                 <p className="text-2xl font-bold">{formatBRL(pendingAmount)}</p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-5 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <Hourglass className="h-5 w-5 text-amber-500 animate-pulse" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground font-medium">Em Processamento</p>
+                <p className="text-2xl font-bold">{formatBRL(processingPayoutsAmount)}</p>
               </div>
             </div>
             
@@ -273,7 +285,7 @@ function ReferralPage() {
                 <Users className="h-5 w-5 text-orange-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground font-medium">Total de Conversões</p>
+                <p className="text-sm text-muted-foreground font-medium">Conversões</p>
                 <p className="text-2xl font-bold">{commissions.length}</p>
               </div>
             </div>
@@ -344,33 +356,41 @@ function ReferralPage() {
                     <tr>
                       <th className="px-6 py-4 font-medium">Data</th>
                       <th className="px-6 py-4 font-medium">Valor</th>
-                      <th className="px-6 py-4 font-medium">Comprovante</th>
-                      <th className="px-6 py-4 font-medium text-right">Status</th>
+                      <th className="px-6 py-4 font-medium">Status</th>
+                      <th className="px-6 py-4 font-medium text-right">Ação</th>
                     </tr>
                   </thead>
                   <tbody>
                     {payoutRequests.map((p) => (
                       <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20">
-                        <td className="px-6 py-4">{new Date(p.created_at).toLocaleDateString()}</td>
-                        <td className="px-6 py-4 font-bold">{formatBRL(p.amount_cents / 100)}</td>
                         <td className="px-6 py-4">
-                          {p.receipt_url ? (
-                            <a href={p.receipt_url} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
-                              Ver Comprovante
-                            </a>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">Aguardando</span>
-                          )}
+                          <span className="font-medium text-foreground">{new Date(p.created_at).toLocaleDateString()}</span>
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        <td className="px-6 py-4 font-bold text-foreground">{formatBRL(p.amount_cents / 100)}</td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                             p.status === 'paid' ? 'bg-success/20 text-success' :
                             p.status === 'requested' ? 'bg-blue-500/20 text-blue-500' :
-                            'bg-red-500/20 text-red-500'
+                            'bg-destructive/20 text-destructive'
                           }`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${
+                              p.status === 'paid' ? 'bg-success' :
+                              p.status === 'requested' ? 'bg-blue-500' :
+                              'bg-destructive'
+                            }`} />
                             {p.status === 'paid' ? 'Pago' :
                              p.status === 'requested' ? 'Pendente' : 'Rejeitado'}
                           </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Button 
+                            onClick={() => setSelectedPayoutDetails(p)} 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-8 gap-1.5 text-xs font-semibold"
+                          >
+                            <Eye className="h-3.5 w-3.5" /> Ver Detalhes
+                          </Button>
                         </td>
                       </tr>
                     ))}
@@ -428,6 +448,157 @@ function ReferralPage() {
                 <Button variant="outline" onClick={() => setPayoutModalOpen(false)}>Cancelar</Button>
                 <Button onClick={handleRequestPayout} disabled={isRequestingPayout || !pixKey || !pixName} className="bg-success text-success-foreground hover:bg-success/90 font-bold">
                   Confirmar Saque
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Modal de Detalhes do Saque */}
+          <Dialog open={!!selectedPayoutDetails} onOpenChange={(o) => !o && setSelectedPayoutDetails(null)}>
+            <DialogContent className="max-w-md sm:max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Wallet className="h-5 w-5 text-primary" /> Detalhes do Saque
+                </DialogTitle>
+                <DialogDescription>
+                  Acompanhe as informações e o status do seu pedido de saque.
+                </DialogDescription>
+              </DialogHeader>
+
+              {selectedPayoutDetails && (
+                <div className="space-y-6 py-4">
+                  {/* Bloco de Valor e Status */}
+                  <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-2xl border border-border/50 text-center space-y-2">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor do Resgate</span>
+                    <span className="text-3xl font-black text-foreground">{formatBRL(selectedPayoutDetails.amount_cents / 100)}</span>
+                    
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mt-2 ${
+                      selectedPayoutDetails.status === 'paid' ? 'bg-success/20 text-success' :
+                      selectedPayoutDetails.status === 'requested' ? 'bg-blue-500/20 text-blue-500' :
+                      'bg-destructive/20 text-destructive'
+                    }`}>
+                      <span className={`h-2 w-2 rounded-full ${
+                        selectedPayoutDetails.status === 'paid' ? 'bg-success' :
+                        selectedPayoutDetails.status === 'requested' ? 'bg-blue-500' :
+                        'bg-destructive'
+                      }`} />
+                      {selectedPayoutDetails.status === 'paid' ? 'Pago' :
+                       selectedPayoutDetails.status === 'requested' ? 'Pendente' : 'Rejeitado'}
+                    </span>
+                  </div>
+
+                  {/* Informações detalhadas */}
+                  <div className="space-y-4">
+                    <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">Dados da Transferência</h4>
+                    
+                    <div className="grid grid-cols-2 gap-4 bg-muted/10 p-4 rounded-xl border border-border/30 text-sm">
+                      <div className="space-y-1">
+                        <span className="text-xs text-muted-foreground">Tipo de Chave PIX</span>
+                        <p className="font-semibold uppercase text-foreground">{selectedPayoutDetails.pix_type}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <span className="text-xs text-muted-foreground">Chave PIX</span>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-mono font-semibold truncate text-foreground select-all">{selectedPayoutDetails.pix_key}</p>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(selectedPayoutDetails.pix_key);
+                              toast.success("Chave Pix copiada!");
+                            }}
+                            className="text-muted-foreground hover:text-foreground transition-colors p-0.5"
+                          >
+                            <Copy className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="col-span-2 space-y-1 border-t border-border/30 pt-2.5">
+                        <span className="text-xs text-muted-foreground">Nome do Titular</span>
+                        <p className="font-semibold text-foreground">{selectedPayoutDetails.pix_name || "Não informado"}</p>
+                      </div>
+                      
+                      <div className="space-y-1 border-t border-border/30 pt-2.5">
+                        <span className="text-xs text-muted-foreground">Solicitado em</span>
+                        <p className="text-xs font-semibold text-foreground">
+                          {new Date(selectedPayoutDetails.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="space-y-1 border-t border-border/30 pt-2.5">
+                        <span className="text-xs text-muted-foreground">
+                          {selectedPayoutDetails.status === 'paid' ? 'Pago em' : 'Última atualização'}
+                        </span>
+                        <p className="text-xs font-semibold text-foreground">
+                          {new Date(selectedPayoutDetails.updated_at || selectedPayoutDetails.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Informações ou Comprovante */}
+                  {selectedPayoutDetails.status === 'requested' && (
+                    <div className="flex gap-3 bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl text-blue-500 text-sm">
+                      <Clock className="h-5 w-5 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">Aguardando pagamento</p>
+                        <p className="text-xs mt-0.5 text-blue-400">O processamento de saques é concluído em até 48 horas úteis.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedPayoutDetails.status === 'rejected' && (
+                    <div className="flex gap-3 bg-destructive/10 border border-destructive/20 p-4 rounded-xl text-destructive text-sm">
+                      <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">Solicitação Recusada</p>
+                        <p className="text-xs mt-0.5 text-destructive/85">Esta solicitação de saque foi recusada. Verifique os dados do Pix e tente novamente ou entre em contato com o suporte.</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedPayoutDetails.status === 'paid' && (
+                    <div className="space-y-3 pt-2">
+                      <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">Comprovante de Pagamento</h4>
+                      {selectedPayoutDetails.receipt_url ? (
+                        <div className="space-y-3">
+                          {/* Verificamos se a URL é de imagem */}
+                          {(selectedPayoutDetails.receipt_url.toLowerCase().match(/\.(jpeg|jpg|gif|png|webp)/) || 
+                            (selectedPayoutDetails.receipt_url.includes('supabase') && !selectedPayoutDetails.receipt_url.toLowerCase().endsWith('.pdf'))) ? (
+                            <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-2 flex flex-col items-center gap-2">
+                              <img 
+                                src={selectedPayoutDetails.receipt_url} 
+                                alt="Comprovante de Pagamento" 
+                                className="max-h-[260px] max-w-full object-contain rounded-lg shadow-sm"
+                              />
+                              <a 
+                                href={selectedPayoutDetails.receipt_url} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold py-1"
+                              >
+                                <ExternalLink className="h-3 w-3" /> Visualizar em Tela Cheia
+                              </a>
+                            </div>
+                          ) : (
+                            <a 
+                              href={selectedPayoutDetails.receipt_url} 
+                              target="_blank" 
+                              rel="noreferrer" 
+                              className="w-full h-12 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all flex items-center justify-center gap-2 font-bold text-sm"
+                            >
+                              <FileText className="h-4 w-4" /> Visualizar Documento / PDF <ExternalLink className="h-3 w-3" />
+                            </a>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground italic">Comprovante de pagamento não anexado.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <DialogFooter>
+                <Button onClick={() => setSelectedPayoutDetails(null)} className="w-full sm:w-auto">
+                  Fechar
                 </Button>
               </DialogFooter>
             </DialogContent>

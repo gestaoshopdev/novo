@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus, Trash2, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid, getAdminPartners, removePartner } from "@/lib/referrals";
+import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid, getAdminPartners, removePartner, rejectPayoutRequest } from "@/lib/referrals";
 import { ManagePartnerModal } from "@/components/admin/ManagePartnerModal";
 import { PartnerDetailsModal } from "@/components/admin/PartnerDetailsModal";
 import { formatBRL } from "@/components/sales/types";
@@ -34,6 +34,9 @@ function AdminPartners() {
   
   const [partnerToRemove, setPartnerToRemove] = useState<any>(null);
   const [removingPartner, setRemovingPartner] = useState(false);
+  
+  const [payoutToReject, setPayoutToReject] = useState<any>(null);
+  const [rejectingPayout, setRejectingPayout] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -68,6 +71,21 @@ function AdminPartners() {
     } finally {
       setRemovingPartner(false);
       setPartnerToRemove(null);
+    }
+  };
+
+  const handleRejectPayout = async () => {
+    if (!payoutToReject) return;
+    setRejectingPayout(true);
+    try {
+      await rejectPayoutRequest(payoutToReject.id);
+      toast.success("Solicitação de saque rejeitada com sucesso!");
+      setPayoutToReject(null);
+      fetchData();
+    } catch (e: any) {
+      toast.error(`Erro ao rejeitar saque: ${e.message || 'Erro desconhecido'}`);
+    } finally {
+      setRejectingPayout(false);
     }
   };
 
@@ -176,21 +194,32 @@ function AdminPartners() {
                     <td className="px-6 py-4 font-bold text-right">{formatBRL(p.amount_cents / 100)}</td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                        p.status === 'paid' ? 'bg-success/20 text-success' : 'bg-orange-500/20 text-orange-500'
+                        p.status === 'paid' ? 'bg-success/20 text-success' :
+                        p.status === 'requested' ? 'bg-orange-500/20 text-orange-500' :
+                        'bg-destructive/20 text-destructive'
                       }`}>
-                        {p.status === 'paid' ? 'Pago' : 'Pendente'}
+                        {p.status === 'paid' ? 'Pago' :
+                         p.status === 'requested' ? 'Pendente' : 'Rejeitado'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       {p.status === 'requested' && (
-                        <Button onClick={() => setSelectedPayout(p)} size="sm" className="bg-success text-success-foreground hover:bg-success/90">
-                          Pagar
-                        </Button>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button onClick={() => setSelectedPayout(p)} size="sm" className="bg-success text-success-foreground hover:bg-success/90">
+                            Pagar
+                          </Button>
+                          <Button onClick={() => setPayoutToReject(p)} size="sm" variant="destructive">
+                            Rejeitar
+                          </Button>
+                        </div>
                       )}
                       {p.status === 'paid' && p.receipt_url && (
                         <a href={p.receipt_url} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1 justify-end">
                           Comprovante <ExternalLink className="h-3 w-3" />
                         </a>
+                      )}
+                      {p.status === 'rejected' && (
+                        <span className="text-muted-foreground text-xs block">Rejeitado</span>
                       )}
                     </td>
                   </tr>
@@ -323,6 +352,39 @@ function AdminPartners() {
                   className="h-10 px-4 rounded-lg bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity text-sm font-semibold flex items-center gap-2"
                 >
                   {removingPartner ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sim, Remover Parceiro"}
+                </button>
+              </AlertDialog.Action>
+            </div>
+          </AlertDialog.Content>
+        </AlertDialog.Portal>
+      </AlertDialog.Root>
+
+      <AlertDialog.Root open={!!payoutToReject} onOpenChange={(open) => !open && setPayoutToReject(null)}>
+        <AlertDialog.Portal>
+          <AlertDialog.Overlay className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[60]" />
+          <AlertDialog.Content className="fixed left-[50%] top-[50%] z-[60] w-full max-w-md translate-x-[-50%] translate-y-[-50%] rounded-2xl border border-border bg-card p-6 shadow-xl animate-in fade-in-0 zoom-in-95">
+            <div className="flex flex-col gap-2">
+              <AlertDialog.Title className="text-lg font-semibold text-destructive flex items-center gap-2">
+                <X className="w-5 h-5" />
+                Rejeitar Solicitação de Saque?
+              </AlertDialog.Title>
+              <AlertDialog.Description className="text-sm text-muted-foreground">
+                Tem certeza que deseja rejeitar o saque de <strong>{payoutToReject && formatBRL(payoutToReject.amount_cents / 100)}</strong> para <strong>{payoutToReject?.user?.email}</strong>? O saldo correspondente retornará a ficar disponível para o afiliado.
+              </AlertDialog.Description>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <AlertDialog.Cancel asChild>
+                <button className="h-10 px-4 rounded-lg border border-border bg-surface hover:bg-muted transition-colors text-sm font-medium">
+                  Cancelar
+                </button>
+              </AlertDialog.Cancel>
+              <AlertDialog.Action asChild>
+                <button 
+                  onClick={handleRejectPayout}
+                  disabled={rejectingPayout}
+                  className="h-10 px-4 rounded-lg bg-destructive text-destructive-foreground hover:opacity-90 transition-opacity text-sm font-semibold flex items-center gap-2"
+                >
+                  {rejectingPayout ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sim, Rejeitar Saque"}
                 </button>
               </AlertDialog.Action>
             </div>
