@@ -455,7 +455,7 @@ function ReferralPage() {
 
           {/* Modal de Detalhes do Saque */}
           <Dialog open={!!selectedPayoutDetails} onOpenChange={(o) => !o && setSelectedPayoutDetails(null)}>
-            <DialogContent className="max-w-md sm:max-w-lg">
+            <DialogContent className="max-w-md sm:max-w-lg max-h-[90vh] flex flex-col">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Wallet className="h-5 w-5 text-primary" /> Detalhes do Saque
@@ -466,13 +466,13 @@ function ReferralPage() {
               </DialogHeader>
 
               {selectedPayoutDetails && (
-                <div className="space-y-6 py-4">
+                <div className="space-y-4 py-2 overflow-y-auto flex-1 min-h-0 pr-1">
                   {/* Bloco de Valor e Status */}
-                  <div className="flex flex-col items-center justify-center p-6 bg-muted/30 rounded-2xl border border-border/50 text-center space-y-2">
+                  <div className="flex flex-col items-center justify-center p-4 bg-muted/30 rounded-2xl border border-border/50 text-center space-y-1">
                     <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Valor do Resgate</span>
                     <span className="text-3xl font-black text-foreground">{formatBRL(selectedPayoutDetails.amount_cents / 100)}</span>
                     
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mt-2 ${
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mt-1 ${
                       selectedPayoutDetails.status === 'paid' ? 'bg-success/20 text-success' :
                       selectedPayoutDetails.status === 'requested' ? 'bg-blue-500/20 text-blue-500' :
                       'bg-destructive/20 text-destructive'
@@ -488,10 +488,10 @@ function ReferralPage() {
                   </div>
 
                   {/* Informações detalhadas */}
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">Dados da Transferência</h4>
                     
-                    <div className="grid grid-cols-2 gap-4 bg-muted/10 p-4 rounded-xl border border-border/30 text-sm">
+                    <div className="grid grid-cols-2 gap-3.5 bg-muted/10 p-3.5 rounded-xl border border-border/30 text-sm">
                       <div className="space-y-1">
                         <span className="text-xs text-muted-foreground">Tipo de Chave PIX</span>
                         <p className="font-semibold uppercase text-foreground">{selectedPayoutDetails.pix_type}</p>
@@ -511,18 +511,18 @@ function ReferralPage() {
                           </button>
                         </div>
                       </div>
-                      <div className="col-span-2 space-y-1 border-t border-border/30 pt-2.5">
+                      <div className="col-span-2 space-y-1 border-t border-border/30 pt-2">
                         <span className="text-xs text-muted-foreground">Nome do Titular</span>
                         <p className="font-semibold text-foreground">{selectedPayoutDetails.pix_name || "Não informado"}</p>
                       </div>
                       
-                      <div className="space-y-1 border-t border-border/30 pt-2.5">
+                      <div className="space-y-1 border-t border-border/30 pt-2">
                         <span className="text-xs text-muted-foreground">Solicitado em</span>
                         <p className="text-xs font-semibold text-foreground">
                           {new Date(selectedPayoutDetails.created_at).toLocaleString()}
                         </p>
                       </div>
-                      <div className="space-y-1 border-t border-border/30 pt-2.5">
+                      <div className="space-y-1 border-t border-border/30 pt-2">
                         <span className="text-xs text-muted-foreground">
                           {selectedPayoutDetails.status === 'paid' ? 'Pago em' : 'Última atualização'}
                         </span>
@@ -555,24 +555,24 @@ function ReferralPage() {
                   )}
 
                   {selectedPayoutDetails.status === 'paid' && (
-                    <div className="space-y-3 pt-2">
+                    <div className="space-y-2 pt-1">
                       <h4 className="font-bold text-sm text-foreground uppercase tracking-wider">Comprovante de Pagamento</h4>
                       {selectedPayoutDetails.receipt_url ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2">
                           {/* Verificamos se a URL é de imagem */}
                           {(selectedPayoutDetails.receipt_url.toLowerCase().match(/\.(jpeg|jpg|gif|png|webp)/) || 
                             (selectedPayoutDetails.receipt_url.includes('supabase') && !selectedPayoutDetails.receipt_url.toLowerCase().endsWith('.pdf'))) ? (
-                            <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-2 flex flex-col items-center gap-2">
+                            <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-2 flex flex-col items-center gap-1.5">
                               <img 
                                 src={selectedPayoutDetails.receipt_url} 
                                 alt="Comprovante de Pagamento" 
-                                className="max-h-[260px] max-w-full object-contain rounded-lg shadow-sm"
+                                className="max-h-[160px] max-w-full object-contain rounded-lg shadow-sm"
                               />
                               <a 
                                 href={selectedPayoutDetails.receipt_url} 
                                 target="_blank" 
                                 rel="noreferrer" 
-                                className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold py-1"
+                                className="text-xs text-primary hover:underline flex items-center gap-1 font-semibold py-0.5"
                               >
                                 <ExternalLink className="h-3 w-3" /> Visualizar em Tela Cheia
                               </a>
@@ -596,7 +596,7 @@ function ReferralPage() {
                 </div>
               )}
 
-              <DialogFooter>
+              <DialogFooter className="pt-2 border-t border-border/30">
                 <Button onClick={() => setSelectedPayoutDetails(null)} className="w-full sm:w-auto">
                   Fechar
                 </Button>
