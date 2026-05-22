@@ -35,10 +35,14 @@ BEGIN
     -- Mensal: Adiciona 30 dias
     v_new_expiry := to_char(timezone('utc'::text, now() + interval '30 days'), 'YYYY-MM-DD"T"HH24:MI:SS"Z"');
   ELSE
-    -- Padrão: Não altera a expiração a menos que não tenha (seja novo)
-    -- Para simplificar, mantemos a expiração atual ou definimos pra 30 dias se nula.
-    -- Aqui vamos apenas renovar 30 dias se for padrão para não quebrar acesso.
-    v_new_expiry := to_char(timezone('utc'::text, now() + interval '30 days'), 'YYYY-MM-DD"T"HH24:MI:SS"Z"');
+    -- Padrão: Mantém a expiração atual, ou define para 30 dias se for nula.
+    SELECT raw_user_meta_data->>'plan_expiry' INTO v_new_expiry
+    FROM auth.users
+    WHERE id = p_target_user_id;
+    
+    IF v_new_expiry IS NULL THEN
+      v_new_expiry := to_char(timezone('utc'::text, now() + interval '30 days'), 'YYYY-MM-DD"T"HH24:MI:SS"Z"');
+    END IF;
   END IF;
 
   -- Atualizar auth.users (user_metadata)

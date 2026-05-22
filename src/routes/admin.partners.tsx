@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus, Trash2, Loader2 } from "lucide-react";
+import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus, Trash2, Loader2, Edit } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid, getAdminPartners, removePartner, rejectPayoutRequest } from "@/lib/referrals";
 import { ManagePartnerModal } from "@/components/admin/ManagePartnerModal";
@@ -30,6 +30,7 @@ function AdminPartners() {
   const [isUploading, setIsUploading] = useState(false);
   
   const [managePartnerOpen, setManagePartnerOpen] = useState(false);
+  const [partnerToEdit, setPartnerToEdit] = useState<any>(null);
   const [selectedPartnerDetails, setSelectedPartnerDetails] = useState<any>(null);
   
   const [partnerToRemove, setPartnerToRemove] = useState<any>(null);
@@ -265,6 +266,16 @@ function AdminPartners() {
                     <td className="px-6 py-4 font-bold">{p.commission_rate}%</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button 
+                          onClick={() => {
+                            setPartnerToEdit(p);
+                            setManagePartnerOpen(true);
+                          }} 
+                          className="p-1.5 text-muted-foreground hover:text-primary transition-colors" 
+                          title="Editar Parceiro"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
                         <button onClick={() => setPartnerToRemove(p)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors" title="Remover Parceiro">
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -394,8 +405,12 @@ function AdminPartners() {
 
       <ManagePartnerModal 
         open={managePartnerOpen} 
-        onOpenChange={setManagePartnerOpen} 
+        onOpenChange={(open) => {
+          setManagePartnerOpen(open);
+          if (!open) setPartnerToEdit(null);
+        }} 
         onSuccess={fetchData}
+        partnerToEdit={partnerToEdit}
       />
 
       <PartnerDetailsModal 

@@ -20,8 +20,10 @@ export const Route = createFileRoute("/app/referral")({
 });
 
 function ReferralPage() {
-  const { plan, planStatus, name } = useProfile();
+  const { plan, planStatus, name, isPartner, commissionRate } = useProfile();
   const { user } = useAuth();
+  
+  const rateToDisplay = isPartner ? `${commissionRate}%` : (plan === 'Elite' ? '20%' : '10%');
   
   const cleanName = (name.split(' ')[0] || "SEUNOME").toUpperCase().replace(/[^A-Z0-9]/g, '');
   const exampleCode = `${cleanName}10`;
@@ -171,7 +173,7 @@ function ReferralPage() {
     <div className="space-y-6">
       <PageHeader 
         title="Indique e Ganhe" 
-        subtitle={`Você é um parceiro ${plan}. Convide amigos e ganhe ${plan === 'Elite' ? '20%' : '10%'} de comissão!`} 
+        subtitle={`Você é um parceiro ${plan}. Convide amigos e ganhe ${rateToDisplay} de comissão!`} 
         icon={Gift} 
       />
 
@@ -211,7 +213,7 @@ function ReferralPage() {
                 <h3 className="text-xl font-bold mb-2 text-primary flex items-center gap-2">
                   <Sparkles className="h-5 w-5" /> Seu Link de Indicação
                 </h3>
-                <p className="text-sm text-muted-foreground mb-6">Compartilhe este link. Você ganhará {plan === 'Elite' ? '20%' : '10%'} sobre todas as mensalidades pagas por quem se cadastrar por ele.</p>
+                <p className="text-sm text-muted-foreground mb-6">Compartilhe este link. Você ganhará {rateToDisplay} sobre todas as mensalidades pagas por quem se cadastrar por ele.</p>
               </div>
               
               <div className="flex items-center gap-3 bg-background border border-border p-2 rounded-xl">

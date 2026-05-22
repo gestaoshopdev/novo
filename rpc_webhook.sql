@@ -12,11 +12,20 @@ DECLARE
   v_commission_cents integer;
   v_percentage numeric;
   v_available_at timestamp with time zone;
+  v_is_first_payment boolean;
+  v_base_plan_price integer;
 BEGIN
   -- 1. Verificar a senha do webhook para segurança
   IF p_secret != 'atlas-webhook-secret-2026' THEN
     RAISE EXCEPTION 'Acesso negado. Senha do webhook incorreta.';
   END IF;
+
+  -- 1.5 Verificar se é o primeiro pagamento (antes de atualizar o metadata)
+  SELECT (raw_user_meta_data->>'plan_expiry') IS NULL INTO v_is_first_payment
+  FROM auth.users
+  WHERE id = p_user_id;
+
+  v_is_first_payment := COALESCE(v_is_first_payment, true);
 
   -- 2. Calcular nova data de expiração (+30 dias)
   v_new_expiry := to_char(timezone('utc'::text, now() + interval '30 days'), 'YYYY-MM-DD"T"HH24:MI:SS"Z"');
@@ -91,11 +100,24 @@ BEGIN
       IF v_percentage > 0 THEN
         -- Define o valor base em centavos dependendo do plano assinado
         IF p_plan = 'Starter' THEN
-          v_commission_cents := 990 * v_percentage;
+          v_base_plan_price := 990;
         ELSIF p_plan = 'Pro' THEN
-          v_commission_cents := 1490 * v_percentage;
+          v_base_plan_price := 1490;
         ELSIF p_plan = 'Elite' THEN
-          v_commission_cents := 1990 * v_percentage;
+          v_base_plan_price := 1990;
+        ELSE
+          v_base_plan_price := 0;
+        END IF;
+
+        IF v_base_plan_price > 0 THEN
+          -- Se for o primeiro pagamento, o indicado recebeu desconto de indicação (1 - v_percentage)
+          -- e o parceiro ganha a comissão calculada em cima do valor com desconto.
+          -- Nas próximas renovações o preço normaliza e a comissão é sobre o preço cheio.
+          IF v_is_first_payment THEN
+            v_commission_cents := round((v_base_plan_price::numeric * (1.0 - v_percentage)) * v_percentage)::integer;
+          ELSE
+            v_commission_cents := round(v_base_plan_price::numeric * v_percentage)::integer;
+          END IF;
         ELSE
           v_commission_cents := 0;
         END IF;

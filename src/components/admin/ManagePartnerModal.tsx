@@ -12,9 +12,10 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  partnerToEdit?: any;
 }
 
-export function ManagePartnerModal({ open, onOpenChange, onSuccess }: Props) {
+export function ManagePartnerModal({ open, onOpenChange, onSuccess, partnerToEdit }: Props) {
   const [users, setUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [searchEmail, setSearchEmail] = useState("");
@@ -28,9 +29,22 @@ export function ManagePartnerModal({ open, onOpenChange, onSuccess }: Props) {
 
   useEffect(() => {
     if (open) {
+      if (partnerToEdit) {
+        setSelectedUserId(partnerToEdit.id);
+        setCommissionRate(partnerToEdit.commission_rate?.toString() || "20");
+        setPlanType(partnerToEdit.plan_type || "Elite");
+        setFreeDuration("padrao"); // By default when editing, don't change duration benefit (keep as-is)
+        setSearchEmail(partnerToEdit.email || "");
+      } else {
+        setSelectedUserId("");
+        setCommissionRate("20");
+        setPlanType("Elite");
+        setFreeDuration("vitalicio");
+        setSearchEmail("");
+      }
       fetchUsers();
     }
-  }, [open]);
+  }, [open, partnerToEdit]);
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
@@ -75,7 +89,7 @@ export function ManagePartnerModal({ open, onOpenChange, onSuccess }: Props) {
 
       if (error) throw error;
       
-      toast.success("Parceiro configurado com sucesso!");
+      toast.success(partnerToEdit ? "Parceiro atualizado com sucesso!" : "Parceiro configurado com sucesso!");
       onSuccess();
       onOpenChange(false);
     } catch (err: any) {
@@ -90,37 +104,52 @@ export function ManagePartnerModal({ open, onOpenChange, onSuccess }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Adicionar Parceiro Comercial</DialogTitle>
+          <DialogTitle>{partnerToEdit ? "Editar Parceiro Comercial" : "Adicionar Parceiro Comercial"}</DialogTitle>
           <DialogDescription>
-            Defina um usuário como parceiro comercial com comissão customizada.
+            {partnerToEdit 
+              ? "Ajuste as comissões ou plano do parceiro selecionado." 
+              : "Defina um usuário como parceiro comercial com comissão customizada."}
           </DialogDescription>
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label>Buscar Usuário (E-mail)</Label>
-            <Input 
-              placeholder="Digite o e-mail..." 
-              value={searchEmail}
-              onChange={e => setSearchEmail(e.target.value)}
-            />
-          </div>
+          {partnerToEdit ? (
+            <div className="grid gap-2">
+              <Label>Usuário</Label>
+              <Input 
+                value={`${partnerToEdit.email} ${partnerToEdit.full_name ? `(${partnerToEdit.full_name})` : ""}`}
+                disabled 
+                className="bg-muted text-muted-foreground cursor-not-allowed"
+              />
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-2">
+                <Label>Buscar Usuário (E-mail)</Label>
+                <Input 
+                  placeholder="Digite o e-mail..." 
+                  value={searchEmail}
+                  onChange={e => setSearchEmail(e.target.value)}
+                />
+              </div>
 
-          <div className="grid gap-2">
-            <Label>Selecione o Usuário</Label>
-            <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-              <SelectTrigger>
-                <SelectValue placeholder={loadingUsers ? "Carregando..." : "Selecione..."} />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredUsers.map(u => (
-                  <SelectItem key={u.id} value={u.id}>
-                    {u.email} {u.full_name ? `(${u.full_name})` : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+              <div className="grid gap-2">
+                <Label>Selecione o Usuário</Label>
+                <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={loadingUsers ? "Carregando..." : "Selecione..."} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filteredUsers.map(u => (
+                      <SelectItem key={u.id} value={u.id}>
+                        {u.email} {u.full_name ? `(${u.full_name})` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
 
           <div className="grid gap-2">
             <Label>Comissão (%) - Máx 25%</Label>
