@@ -104,6 +104,14 @@ function ReferralPage() {
 
   const handleRequestPayout = async () => {
     if (!user || !pixKey || !pixName) return;
+
+    // Validar cooldown no lado do cliente preventivamente
+    const cooldownInfo = getPayoutCooldownInfo();
+    if (cooldownInfo.isCooldownActive) {
+      toast.error(`Você só pode solicitar um novo saque após ${plan === 'Pro' ? '15' : '5'} dias do último saque. Faltam ${cooldownInfo.daysRemaining} dias.`);
+      return;
+    }
+
     setIsRequestingPayout(true);
     try {
       await requestPayout(user.id, Math.floor(availableAmount * 100), pixName, pixKey, pixType);
@@ -125,6 +133,37 @@ function ReferralPage() {
   const processingPayoutsAmount = payoutRequests.filter(p => p.status === 'requested').reduce((acc, p) => acc + p.amount_cents, 0) / 100;
   const availableAmount = Math.max(0, baseAvailableAmount - processingPayoutsAmount + simulatedBalance);
   const withdrawnAmount = commissions.filter(c => c.status === 'withdrawn').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
+
+  const getPayoutCooldownInfo = () => {
+    if (plan !== "Pro" && plan !== "Elite") {
+      return { isCooldownActive: false, daysRemaining: 0, nextPayoutDate: null };
+    }
+
+    const cooldownDays = plan === "Pro" ? 15 : 5;
+
+    // Achar o último saque que não foi rejeitado (status 'requested' ou 'paid')
+    const lastValidPayout = payoutRequests.find(p => p.status !== "rejected");
+
+    if (!lastValidPayout) {
+      return { isCooldownActive: false, daysRemaining: 0, nextPayoutDate: null };
+    }
+
+    const lastPayoutDate = new Date(lastValidPayout.created_at);
+    const nextPayoutDate = new Date(lastPayoutDate.getTime() + cooldownDays * 24 * 60 * 60 * 1000);
+    const now = new Date();
+
+    const timeDiff = nextPayoutDate.getTime() - now.getTime();
+    const daysRemaining = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+    return {
+      isCooldownActive: daysRemaining > 0,
+      daysRemaining: Math.max(0, daysRemaining),
+      nextPayoutDate,
+      lastPayoutDate,
+    };
+  };
+
+  const cooldownInfo = getPayoutCooldownInfo();
 
   if (loading) {
     return (
@@ -235,9 +274,26 @@ function ReferralPage() {
                 <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">Saldo Disponível</p>
                 <p className="text-4xl font-black text-foreground">{formatBRL(availableAmount)}</p>
               </div>
-              <Button onClick={() => setPayoutModalOpen(true)} disabled={availableAmount < 30} className="w-full font-bold h-11 bg-success hover:bg-success/90 text-success-foreground">
-                Solicitar Saque (Min. R$ 30)
+              <Button 
+                onClick={() => setPayoutModalOpen(true)} 
+                disabled={availableAmount < 30 || cooldownInfo.isCooldownActive} 
+                className="w-full font-bold h-11 bg-success hover:bg-success/90 text-success-foreground"
+              >
+                {cooldownInfo.isCooldownActive 
+                  ? `Saque Bloqueado (${cooldownInfo.daysRemaining}d restantes)` 
+                  : "Solicitar Saque (Min. R$ 30)"}
               </Button>
+              {cooldownInfo.isCooldownActive && (
+                <div className="flex items-start gap-2.5 text-xs text-amber-500 bg-amber-500/10 p-3.5 rounded-xl border border-amber-500/20 text-left w-full mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-bold">Carência de Saque Ativa</p>
+                    <p className="mt-0.5 text-muted-foreground/80">
+                      Você pode solicitar saques a cada {plan === 'Pro' ? '15' : '5'} dias neste plano. Próximo saque disponível em: <strong className="text-foreground">{cooldownInfo.nextPayoutDate?.toLocaleDateString()}</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
               {user?.email === 'jcasales15@gmail.com' && (
                 <Button 
                   onClick={() => setSimulatedBalance(50)} 

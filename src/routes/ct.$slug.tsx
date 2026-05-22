@@ -82,7 +82,7 @@ function PublicCatalogPage() {
   }
 
   const planId = (profile?.plan_type || "starter").toLowerCase() as keyof typeof PLANS;
-  const currentPlanId = planId === 'básico' ? 'starter' : planId;
+  const currentPlanId = (planId as string) === 'básico' ? 'starter' : planId;
   const limits = PLANS[currentPlanId]?.limits || PLANS.starter.limits;
 
   const { colors, layout, show_brand, name, banner_text, profile_photo, whatsapp, instagram } = catalog;

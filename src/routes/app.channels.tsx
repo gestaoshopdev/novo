@@ -33,9 +33,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
-  loadChannels,
   type ChannelInfo,
-  CHANNELS_KEY,
   formatBRL,
   type SaleRow,
   DEFAULT_CHANNELS,

@@ -4,6 +4,7 @@ export type ChannelInfo = {
   id: string;
   name: string;
   type: "Online" | "Físico";
+  icon?: string;
 };
 
 export const DEFAULT_CHANNELS: ChannelInfo[] = [

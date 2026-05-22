@@ -55,7 +55,7 @@ export function RecentTransactions({ sales }: Props) {
                   {s.code} · {formatTime(s.date)}
                 </p>
               </div>
-              <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${statusStyle[s.status] || statusStyle.concluida}`}>
+              <span className={`text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded ${statusStyle[s.status || "concluida"] || statusStyle.concluida}`}>
                 {s.status}
               </span>
               <span className={`text-[13px] font-mono-tabular font-semibold w-28 text-right ${positive ? "text-success" : "text-destructive"}`}>

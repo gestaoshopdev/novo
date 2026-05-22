@@ -158,7 +158,7 @@ function DashboardMockup() {
     <div className="w-full relative shadow-2xl shadow-primary/10 rounded-2xl overflow-hidden border border-border/50 bg-[#0A0D14]">
       <svg viewBox="0 0 1100 850" className="w-full h-auto block" preserveAspectRatio="xMidYMid meet">
         <foreignObject width="1100" height="850">
-          <div xmlns="http://www.w3.org/1999/xhtml" className="w-[1100px] h-[850px] bg-[#0A0D14] flex">
+          <div className="w-[1100px] h-[850px] bg-[#0A0D14] flex">
             {/* Sidebar */}
             <div className="w-[240px] border-r border-border/50 bg-[#0B0E16] hidden md:flex flex-col p-4 shrink-0 overflow-y-auto custom-scrollbar">
               <div className="flex items-center gap-2 mb-8 px-2 text-foreground font-semibold">

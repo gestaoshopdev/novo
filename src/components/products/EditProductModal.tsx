@@ -390,7 +390,7 @@ export function EditProductModal({ open, onOpenChange, product, onSave }: Props)
                 onClick={() => {
                   const newState = !inCatalog;
                   setInCatalog(newState);
-                  if (newState && catalogs.length === 1) {
+                  if (newState && catalogs.length === 1 && catalogs[0].id) {
                     setSelectedCatalogIds([catalogs[0].id]);
                   } else {
                     setSelectedCatalogIds([]);
@@ -417,29 +417,33 @@ export function EditProductModal({ open, onOpenChange, product, onSave }: Props)
                   Adicionar aos catálogos:
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {catalogs.map(cat => (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCatalogIds(prev => {
-                          const next = prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id];
-                          setInCatalog(next.length > 0);
-                          return next;
-                        });
-                      }}
-                      className="flex items-center gap-3 p-2 rounded-lg border border-border hover:border-primary/50 transition-all text-left bg-surface/30"
-                    >
-                      <span
-                        className={`relative min-w-5 h-5 rounded border transition-all flex items-center justify-center ${
-                          selectedCatalogIds.includes(cat.id) ? "border-primary bg-primary text-white" : "border-border"
-                        }`}
+                  {catalogs.map(cat => {
+                    const catId = cat.id;
+                    if (!catId) return null;
+                    return (
+                      <button
+                        key={catId}
+                        type="button"
+                        onClick={() => {
+                          setSelectedCatalogIds(prev => {
+                            const next = prev.includes(catId) ? prev.filter(id => id !== catId) : [...prev, catId];
+                            setInCatalog(next.length > 0);
+                            return next;
+                          });
+                        }}
+                        className="flex items-center gap-3 p-2 rounded-lg border border-border hover:border-primary/50 transition-all text-left bg-surface/30"
                       >
-                        {selectedCatalogIds.includes(cat.id) && <Check className="h-3 w-3" />}
-                      </span>
-                      <span className="text-[12px] font-medium line-clamp-1">{cat.name}</span>
-                    </button>
-                  ))}
+                        <span
+                          className={`relative min-w-5 h-5 rounded border transition-all flex items-center justify-center ${
+                            selectedCatalogIds.includes(catId) ? "border-primary bg-primary text-white" : "border-border"
+                          }`}
+                        >
+                          {selectedCatalogIds.includes(catId) && <Check className="h-3 w-3" />}
+                        </span>
+                        <span className="text-[12px] font-medium line-clamp-1">{cat.name}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

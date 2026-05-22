@@ -52,9 +52,7 @@ import {
   type PaymentMethod,
   paymentLabels,
   formatBRL,
-  loadChannels,
   type ChannelInfo,
-  CHANNELS_KEY,
   DEFAULT_CHANNELS,
 } from "@/components/sales/types";
 import type { ProductRow, StockMovement } from "@/components/products/types";
@@ -729,7 +727,7 @@ function SalesPage() {
         open={registerOpen}
         onOpenChange={setRegisterOpen}
         products={products}
-        onSubmit={(sale) => handleRegister(sale)}
+        onSubmit={(sale, onDone) => handleRegister(sale, onDone)}
       />
       <ReceiptModal open={receiptOpen} onOpenChange={setReceiptOpen} sale={activeSale} />
       <EditSaleModal

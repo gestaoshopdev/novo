@@ -66,7 +66,7 @@ export function NewPaymentMethodModal({ open, onOpenChange, editingMethod }: Pro
 
     const payload = {
       name,
-      fee_type: parseFloat(feeFixed) > 0 ? "fixed" : "percent" as const,
+      fee_type: (parseFloat(feeFixed) > 0 ? "fixed" : "percent") as "fixed" | "percent",
       fee_value: parseFloat(feePercent) || parseFloat(feeFixed) || 0,
       installment_fees: feesJson,
       icon: "CreditCard",

@@ -16,7 +16,7 @@ export default defineConfig({
         '/api/abacatepay': {
           target: 'https://api.abacatepay.com',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api\/abacatepay/, ''),
+          rewrite: (path: string) => path.replace(/^\/api\/abacatepay/, ''),
         }
       }
     }

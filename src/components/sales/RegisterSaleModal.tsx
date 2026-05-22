@@ -54,7 +54,7 @@ export function RegisterSaleModal({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   products: ProductRow[];
-  onSubmit: (sale: SaleRow) => void;
+  onSubmit: (sale: SaleRow, onDone?: () => void) => void;
 }) {
   const [items, setItems] = useState<DraftItem[]>([newDraftItem()]);
   const [channel, setChannel] = useState<SaleChannel | "">("");

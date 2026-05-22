@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { type ProductRow, type ProductHistory } from "@/components/products/types";
+import { type ProductRow, type StockMovement as ProductHistory } from "@/components/products/types";
 import { type ChannelInfo, type SaleRow, type SaleItem, DEFAULT_CHANNELS } from "@/components/sales/types";
 import { type CatalogSettings } from "@/components/catalog/types";
 

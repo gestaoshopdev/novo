@@ -105,15 +105,20 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
             .select('plan_type')
             .eq('id', freshUser.id)
             .single()
-            .then(({ data: profileData }) => {
-              if (profileData && profileData.plan_type !== freshUserPlan) {
-                supabase.from('profiles')
-                  .update({ plan_type: freshUserPlan })
-                  .eq('id', freshUser.id)
-                  .then(() => console.log('Sincronização de plano (auto-cura com dados frescos) realizada com sucesso.'));
-              }
-            })
-            .catch(e => console.error("Erro na auto-cura:", e));
+            .then(
+              ({ data: profileData }) => {
+                if (profileData && profileData.plan_type !== freshUserPlan) {
+                  supabase.from('profiles')
+                    .update({ plan_type: freshUserPlan })
+                    .eq('id', freshUser.id)
+                    .then(
+                      () => console.log('Sincronização de plano (auto-cura com dados frescos) realizada com sucesso.'),
+                      (e: any) => console.error("Erro na auto-cura (update):", e)
+                    );
+                }
+              },
+              (e: any) => console.error("Erro na auto-cura:", e)
+            );
         }
       }).catch(err => {
         console.error("Erro ao carregar dados atualizados do usuário:", err);

@@ -176,8 +176,9 @@ function ProductsPage() {
   };
 
   const handleUpdate = (updated: ProductRow, explicitMovement?: any) => {
-    const isNewHistory = updated.history[0] && typeof updated.history[0].id === "string" && updated.history[0].id.includes("-");
-    const historyToSave = explicitMovement || (isNewHistory ? updated.history[0] : undefined);
+    const firstHistory = updated.history?.[0];
+    const isNewHistory = firstHistory && typeof firstHistory.id === "string" && firstHistory.id.includes("-");
+    const historyToSave = explicitMovement || (isNewHistory ? firstHistory : undefined);
     
     updateProduct(
       { sku: updated.sku, updates: updated, history: historyToSave },
@@ -890,8 +891,8 @@ function RowAction({
   );
 }
 
-function Th({ children, align = "left" }: { children: React.ReactNode; align?: "left" | "right" }) {
-  return <th className={`px-4 py-3 text-${align} font-semibold`}>{children}</th>;
+function Th({ children, align = "left", className = "" }: { children: React.ReactNode; align?: "left" | "right"; className?: string }) {
+  return <th className={`px-4 py-3 text-${align} font-semibold ${className}`}>{children}</th>;
 }
 function Td({
   children,
