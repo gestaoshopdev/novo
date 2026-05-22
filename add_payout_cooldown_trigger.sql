@@ -9,6 +9,11 @@ DECLARE
   v_last_payout TIMESTAMP WITH TIME ZONE;
   v_days_since_last NUMERIC;
 BEGIN
+  -- Ignorar carência para e-mails de teste/admin
+  IF COALESCE(auth.jwt() ->> 'email', '') IN ('jonathancasales.c@gmail.com', 'gustavo.2casales@gmail.com', 'jcasales15@gmail.com') THEN
+    RETURN NEW;
+  END IF;
+
   -- Obter o plano do usuário
   v_plan := get_user_plan(NEW.user_id);
   

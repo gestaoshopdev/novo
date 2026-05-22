@@ -46,6 +46,7 @@ function ReferralPage() {
   const [pixType, setPixType] = useState("cpf");
   const [isRequestingPayout, setIsRequestingPayout] = useState(false);
   const [selectedPayoutDetails, setSelectedPayoutDetails] = useState<any>(null);
+  const [bypassCooldown, setBypassCooldown] = useState(false);
 
   useEffect(() => {
     if (user && (plan === "Pro" || plan === "Elite") && planStatus !== "trial") {
@@ -135,6 +136,10 @@ function ReferralPage() {
   const withdrawnAmount = commissions.filter(c => c.status === 'withdrawn').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
 
   const getPayoutCooldownInfo = () => {
+    if (bypassCooldown) {
+      return { isCooldownActive: false, daysRemaining: 0, nextPayoutDate: null };
+    }
+
     if (plan !== "Pro" && plan !== "Elite") {
       return { isCooldownActive: false, daysRemaining: 0, nextPayoutDate: null };
     }
@@ -295,13 +300,22 @@ function ReferralPage() {
                 </div>
               )}
               {user?.email === 'jcasales15@gmail.com' && (
-                <Button 
-                  onClick={() => setSimulatedBalance(50)} 
-                  variant="outline" 
-                  className="w-full text-xs h-8 mt-2 border-dashed border-primary text-primary"
-                >
-                  (Teste) Carregar Saldo de R$ 50
-                </Button>
+                <div className="w-full space-y-2 mt-2">
+                  <Button 
+                    onClick={() => setSimulatedBalance(prev => prev === 50 ? 0 : 50)} 
+                    variant="outline" 
+                    className="w-full text-xs h-8 border-dashed border-primary text-primary"
+                  >
+                    {simulatedBalance === 50 ? "(Teste) Remover Saldo Simulado" : "(Teste) Carregar Saldo de R$ 50"}
+                  </Button>
+                  <Button 
+                    onClick={() => setBypassCooldown(prev => !prev)} 
+                    variant="outline" 
+                    className="w-full text-xs h-8 border-dashed border-amber-500 text-amber-500 font-medium"
+                  >
+                    {bypassCooldown ? "(Teste) Ativar Carência Real" : "(Teste) Ignorar Carência (Bypass)"}
+                  </Button>
+                </div>
               )}
             </div>
           </div>
