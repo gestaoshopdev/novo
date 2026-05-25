@@ -499,7 +499,13 @@ function ReferralPage() {
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
                   <Label>Tipo de Chave PIX</Label>
-                  <Select value={pixType} onValueChange={setPixType}>
+                  <Select 
+                    value={pixType} 
+                    onValueChange={(val) => {
+                      setPixType(val);
+                      setPixKey(""); // Clear key on type change
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -514,9 +520,28 @@ function ReferralPage() {
                 <div className="space-y-2">
                   <Label>Sua Chave PIX</Label>
                   <Input 
-                    placeholder="Digite sua chave PIX" 
+                    placeholder={
+                      pixType === "cpf" ? "000.000.000-00 ou 00.000.000/0000-00" :
+                      pixType === "phone" ? "(00) 90000-0000" :
+                      pixType === "email" ? "seu-email@dominio.com" :
+                      "Digite sua chave PIX"
+                    } 
+                    maxLength={
+                      pixType === "cpf" ? 18 :
+                      pixType === "phone" ? 15 :
+                      undefined
+                    }
                     value={pixKey} 
-                    onChange={e => setPixKey(e.target.value)} 
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (pixType === "cpf") {
+                        setPixKey(formatCpfCnpj(val));
+                      } else if (pixType === "phone") {
+                        setPixKey(formatPhone(val));
+                      } else {
+                        setPixKey(val);
+                      }
+                    }} 
                   />
                 </div>
                 <div className="space-y-2">
@@ -700,4 +725,35 @@ function Sparkles(props: any) {
       <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>
     </svg>
   );
+}
+
+function formatCpfCnpj(value: string): string {
+  const clean = value.replace(/\D/g, "");
+  if (clean.length <= 11) {
+    return clean
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  } else {
+    return clean
+      .substring(0, 14)
+      .replace(/(\d{2})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1/$2")
+      .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+  }
+}
+
+function formatPhone(value: string): string {
+  const clean = value.replace(/\D/g, "");
+  if (clean.length <= 10) {
+    return clean
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{4})(\d{1,4})$/, "$1-$2");
+  } else {
+    return clean
+      .substring(0, 11)
+      .replace(/(\d{2})(\d)/, "($1) $2")
+      .replace(/(\d{5})(\d{1,4})$/, "$1-$2");
+  }
 }
