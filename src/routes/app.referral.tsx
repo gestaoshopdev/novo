@@ -556,7 +556,11 @@ function ReferralPage() {
 
               <DialogFooter>
                 <Button variant="outline" onClick={() => setPayoutModalOpen(false)}>Cancelar</Button>
-                <Button onClick={handleRequestPayout} disabled={isRequestingPayout || !pixKey || !pixName} className="bg-success text-success-foreground hover:bg-success/90 font-bold">
+                <Button 
+                  onClick={handleRequestPayout} 
+                  disabled={isRequestingPayout || !pixKey.trim() || !pixName.trim()} 
+                  className="bg-success text-success-foreground hover:bg-success/90 font-bold disabled:opacity-50 disabled:pointer-events-none"
+                >
                   Confirmar Saque
                 </Button>
               </DialogFooter>
