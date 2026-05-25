@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus, Trash2, Loader2, Edit } from "lucide-react";
+import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus, Trash2, Loader2, Edit, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid, getAdminPartners, removePartner, rejectPayoutRequest } from "@/lib/referrals";
+import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid, getAdminPartners, removePartner, rejectPayoutRequest, getAdminReferrals } from "@/lib/referrals";
 import { ManagePartnerModal } from "@/components/admin/ManagePartnerModal";
-import { PartnerDetailsModal } from "@/components/admin/PartnerDetailsModal";
+import { UserAffiliateDetailsModal } from "@/components/admin/UserAffiliateDetailsModal";
 import { formatBRL } from "@/components/sales/types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -23,6 +23,7 @@ function AdminPartners() {
   const [payouts, setPayouts] = useState<any[]>([]);
   const [commissions, setCommissions] = useState<any[]>([]);
   const [partners, setPartners] = useState<any[]>([]);
+  const [referrals, setReferrals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [selectedPayout, setSelectedPayout] = useState<any>(null);
@@ -31,7 +32,7 @@ function AdminPartners() {
   
   const [managePartnerOpen, setManagePartnerOpen] = useState(false);
   const [partnerToEdit, setPartnerToEdit] = useState<any>(null);
-  const [selectedPartnerDetails, setSelectedPartnerDetails] = useState<any>(null);
+  const [detailUser, setDetailUser] = useState<{ id: string; email: string; name: string } | null>(null);
   
   const [partnerToRemove, setPartnerToRemove] = useState<any>(null);
   const [removingPartner, setRemovingPartner] = useState(false);
@@ -46,12 +47,14 @@ function AdminPartners() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const reqs = await getAdminPayoutRequests();
-      const comms = await getAdminCommissions();
-      const parts = await getAdminPartners();
+      const reqs = await getAdminPayoutRequests().catch(() => []);
+      const comms = await getAdminCommissions().catch(() => []);
+      const parts = await getAdminPartners().catch(() => []);
+      const refs = await getAdminReferrals().catch(() => []);
       setPayouts(reqs || []);
       setCommissions(comms || []);
       setPartners(parts || []);
+      setReferrals(refs || []);
     } catch (e: any) {
       console.error(e);
       toast.error(`Erro ao carregar dados: ${e.message || 'Erro desconhecido'}`);
@@ -204,24 +207,38 @@ function AdminPartners() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      {p.status === 'requested' && (
-                        <div className="flex items-center justify-end gap-2">
-                          <Button onClick={() => setSelectedPayout(p)} size="sm" className="bg-success text-success-foreground hover:bg-success/90">
-                            Pagar
-                          </Button>
-                          <Button onClick={() => setPayoutToReject(p)} size="sm" variant="destructive">
-                            Rejeitar
-                          </Button>
-                        </div>
-                      )}
-                      {p.status === 'paid' && p.receipt_url && (
-                        <a href={p.receipt_url} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1 justify-end">
-                          Comprovante <ExternalLink className="h-3 w-3" />
-                        </a>
-                      )}
-                      {p.status === 'rejected' && (
-                        <span className="text-muted-foreground text-xs block">Rejeitado</span>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        <Button 
+                          onClick={() => setDetailUser({
+                            id: p.user_id,
+                            email: p.user?.email,
+                            name: p.user?.raw_user_meta_data?.name || 'Usuário'
+                          })}
+                          size="sm" 
+                          variant="outline" 
+                          className="h-8 gap-1 px-2 text-xs font-medium"
+                        >
+                          <Eye className="h-3 w-3" /> Histórico
+                        </Button>
+                        {p.status === 'requested' && (
+                          <>
+                            <Button onClick={() => setSelectedPayout(p)} size="sm" className="bg-success text-success-foreground hover:bg-success/90 h-8 px-2 text-xs">
+                              Pagar
+                            </Button>
+                            <Button onClick={() => setPayoutToReject(p)} size="sm" variant="destructive" className="h-8 px-2 text-xs">
+                              Rejeitar
+                            </Button>
+                          </>
+                        )}
+                        {p.status === 'paid' && p.receipt_url && (
+                          <a href={p.receipt_url} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs flex items-center gap-1">
+                            Comprovante <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
+                        {p.status === 'rejected' && (
+                          <span className="text-muted-foreground text-xs block">Rejeitado</span>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -279,7 +296,15 @@ function AdminPartners() {
                         <button onClick={() => setPartnerToRemove(p)} className="p-1.5 text-muted-foreground hover:text-destructive transition-colors" title="Remover Parceiro">
                           <Trash2 className="w-4 h-4" />
                         </button>
-                        <Button onClick={() => setSelectedPartnerDetails(p)} size="sm" variant="outline">
+                        <Button 
+                          onClick={() => setDetailUser({
+                            id: p.id,
+                            email: p.email,
+                            name: p.full_name || 'Usuário'
+                          })} 
+                          size="sm" 
+                          variant="outline"
+                        >
                           Detalhes
                         </Button>
                       </div>
@@ -413,11 +438,15 @@ function AdminPartners() {
         partnerToEdit={partnerToEdit}
       />
 
-      <PartnerDetailsModal 
-        open={!!selectedPartnerDetails} 
-        onOpenChange={(o) => !o && setSelectedPartnerDetails(null)} 
-        partner={selectedPartnerDetails}
+      <UserAffiliateDetailsModal 
+        open={!!detailUser} 
+        onOpenChange={(o) => !o && setDetailUser(null)} 
+        userId={detailUser?.id || null}
+        userEmail={detailUser?.email || null}
+        userName={detailUser?.name || null}
         commissions={commissions}
+        payouts={payouts}
+        referrals={referrals}
       />
 
     </div>

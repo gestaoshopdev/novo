@@ -175,3 +175,17 @@ export async function rejectPayoutRequest(payoutId: string) {
   if (error) throw error;
   return data;
 }
+
+export async function getAdminReferrals() {
+  try {
+    const { data, error } = await supabase.rpc('get_admin_referrals');
+    if (error) {
+      console.warn("get_admin_referrals RPC not found or failed. Execute the rpc_get_admin_referrals.sql script in Supabase SQL Editor:", error);
+      return [];
+    }
+    return data;
+  } catch (err) {
+    console.error("Error calling getAdminReferrals:", err);
+    return [];
+  }
+}

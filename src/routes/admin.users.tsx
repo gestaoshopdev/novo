@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Search, MoreVertical, ShieldBan, ArrowUpCircle, UserPlus, Loader2, Trash2 } from "lucide-react";
+import { Search, MoreVertical, ShieldBan, ArrowUpCircle, UserPlus, Loader2, Trash2, Eye, Gift } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AddUserModal } from "@/components/admin/AddUserModal";
 import { supabase } from "@/lib/supabase";
@@ -24,6 +24,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { getAdminPayoutRequests, getAdminCommissions, getAdminReferrals } from "@/lib/referrals";
+import { UserAffiliateDetailsModal } from "@/components/admin/UserAffiliateDetailsModal";
+import { formatBRL } from "@/components/sales/types";
 
 export const Route = createFileRoute("/admin/users")({
   head: () => ({ meta: [{ title: "Usuários · Admin" }] }),
@@ -42,6 +45,11 @@ interface Profile {
 function AdminUsers() {
   const [addUserModalOpen, setAddUserModalOpen] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [commissions, setCommissions] = useState<any[]>([]);
+  const [payouts, setPayouts] = useState<any[]>([]);
+  const [referrals, setReferrals] = useState<any[]>([]);
+  const [detailUser, setDetailUser] = useState<{ id: string; email: string; name: string } | null>(null);
+  
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [userToDelete, setUserToDelete] = useState<Profile | null>(null);
@@ -59,19 +67,24 @@ function AdminUsers() {
 
   const fetchProfiles = async () => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const [profilesRes, commsRes, payoutsRes, referralsRes] = await Promise.all([
+        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+        getAdminCommissions().catch(() => []),
+        getAdminPayoutRequests().catch(() => []),
+        getAdminReferrals().catch(() => [])
+      ]);
 
-      if (error) throw error;
+      if (profilesRes.error) throw profilesRes.error;
       
-      const usersOnly = (data || []).filter(p => !ADMIN_EMAILS.includes(p.email));
+      const usersOnly = (profilesRes.data || []).filter(p => !ADMIN_EMAILS.includes(p.email));
       setProfiles(usersOnly);
+      setCommissions(commsRes || []);
+      setPayouts(payoutsRes || []);
+      setReferrals(referralsRes || []);
     } catch (err: any) {
-      console.error("Erro ao buscar perfis:", err);
-      if (!err.message.includes("relation \"profiles\" does not exist")) {
-        toast.error("Erro ao carregar usuários");
+      console.error("Erro ao buscar dados do painel:", err);
+      if (!err.message?.includes("relation \"profiles\" does not exist")) {
+        toast.error("Erro ao carregar usuários e métricas");
       }
     } finally {
       setLoading(false);
@@ -332,6 +345,8 @@ function AdminUsers() {
                   <th className="px-6 py-4">Usuário</th>
                   <th className="px-6 py-4">Plano</th>
                   <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4">Indicados</th>
+                  <th className="px-6 py-4">Comissões</th>
                   <th className="px-6 py-4">Data Registro</th>
                   <th className="px-6 py-4 text-right">Ações</th>
                </tr>
@@ -339,7 +354,7 @@ function AdminUsers() {
             <tbody className="divide-y divide-border/50">
                {loading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center">
+                    <td colSpan={7} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center gap-2 text-muted-foreground">
                         <Loader2 className="w-6 h-6 animate-spin" />
                         <span>Carregando usuários...</span>
@@ -348,87 +363,134 @@ function AdminUsers() {
                   </tr>
                ) : filteredProfiles.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                       Nenhum usuário encontrado.
                     </td>
                   </tr>
                ) : (
-                 filteredProfiles.map((user) => (
-                    <tr key={user.id} className="hover:bg-muted/30 transition-colors">
-                       <td className="px-6 py-4">
-                          <div className="font-medium text-foreground">{user.full_name || "Sem Nome"}</div>
-                          <div className="text-xs text-muted-foreground">{user.email}</div>
-                       </td>
-                       <td className="px-6 py-4 font-medium capitalize">{user.plan_type}</td>
-                       <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                             user.status === 'active' ? 'bg-success/15 text-success' :
-                             user.status === 'trial' ? 'bg-warning/15 text-warning' :
-                             'bg-destructive/15 text-destructive'
-                          }`}>
-                             {user.status}
-                          </span>
-                       </td>
-                       <td className="px-6 py-4 text-muted-foreground">
-                          {format(new Date(user.created_at), "dd/MM/yyyy")}
-                       </td>
-                       <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                             <button className="p-1.5 text-muted-foreground hover:text-primary transition-colors" title="Fazer Upgrade">
-                                <ArrowUpCircle className="w-4 h-4" />
-                             </button>
-                             <button 
-                               onClick={() => setUserToToggle(user)}
-                               className={`p-1.5 transition-colors ${user.status === 'blocked' ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:text-destructive'}`} 
-                               title={user.status === 'blocked' ? "Desbloquear Acesso" : "Bloquear Acesso"}
-                             >
-                                <ShieldBan className="w-4 h-4" />
-                             </button>
-                             
-                             <DropdownMenu.Root>
-                               <DropdownMenu.Trigger asChild>
-                                 <button className="p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors outline-none">
-                                   <MoreVertical className="w-4 h-4" />
-                                 </button>
-                               </DropdownMenu.Trigger>
-                               <DropdownMenu.Portal>
-                                 <DropdownMenu.Content className="z-[50] min-w-[160px] bg-card border border-border p-1.5 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95" align="end">
-                                   <DropdownMenu.Item 
-                                      onClick={() => {
-                                        setSelectedPlan(user.plan_type === 'básico' ? 'Starter' : user.plan_type || 'Starter');
-                                        setUserToChangePlan(user);
-                                      }}
-                                      className="flex items-center gap-2 px-2.5 py-2 text-sm text-muted-foreground hover:text-foreground outline-none cursor-pointer rounded-lg hover:bg-muted transition-colors"
-                                   >
-                                      <ArrowUpCircle className="w-4 h-4" />
-                                      Alterar Plano
-                                   </DropdownMenu.Item>
-                                   <DropdownMenu.Item 
-                                      onClick={() => setUserToToggle(user)}
-                                      className={`flex items-center gap-2 px-2.5 py-2 text-sm outline-none cursor-pointer rounded-lg transition-colors ${user.status === 'blocked' ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-                                   >
-                                      <ShieldBan className="w-4 h-4" />
-                                      {user.status === 'blocked' ? "Desbloquear Usuário" : "Bloquear Usuário"}
-                                   </DropdownMenu.Item>
-                                   <DropdownMenu.Separator className="h-px bg-border my-1" />
-                                   <DropdownMenu.Item 
-                                      onClick={() => setUserToDelete(user)}
-                                      className="flex items-center gap-2 px-2.5 py-2 text-sm text-destructive hover:bg-destructive/10 outline-none cursor-pointer rounded-lg transition-colors"
-                                   >
-                                      <Trash2 className="w-4 h-4" />
-                                      Excluir Usuário
-                                   </DropdownMenu.Item>
-                                 </DropdownMenu.Content>
-                               </DropdownMenu.Portal>
-                             </DropdownMenu.Root>
-                          </div>
-                       </td>
-                    </tr>
-                 ))
+                 filteredProfiles.map((user) => {
+                   const userReferralsCount = referrals.filter(r => r.referrer_id === user.id).length;
+                   const userCommissionsTotal = commissions.filter(c => c.referrer_id === user.id).reduce((acc, c) => acc + c.amount_cents, 0) / 100;
+
+                   return (
+                     <tr key={user.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="px-6 py-4">
+                           <div className="font-medium text-foreground">{user.full_name || "Sem Nome"}</div>
+                           <div className="text-xs text-muted-foreground">{user.email}</div>
+                        </td>
+                        <td className="px-6 py-4 font-medium capitalize">{user.plan_type}</td>
+                        <td className="px-6 py-4">
+                           <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                              user.status === 'active' ? 'bg-success/15 text-success' :
+                              user.status === 'trial' ? 'bg-warning/15 text-warning' :
+                              'bg-destructive/15 text-destructive'
+                           }`}>
+                              {user.status}
+                           </span>
+                        </td>
+                        <td className="px-6 py-4 font-semibold text-foreground">
+                           {userReferralsCount > 0 ? (
+                             <span className="inline-flex items-center gap-1 bg-primary/10 text-primary px-2.5 py-0.5 rounded-full text-xs">
+                               <Users className="h-3 w-3" /> {userReferralsCount}
+                             </span>
+                           ) : (
+                             <span className="text-muted-foreground text-xs font-normal">0</span>
+                           )}
+                        </td>
+                        <td className="px-6 py-4 font-bold text-success">
+                           {userCommissionsTotal > 0 ? formatBRL(userCommissionsTotal) : <span className="text-muted-foreground text-xs font-normal">R$ 0,00</span>}
+                        </td>
+                        <td className="px-6 py-4 text-muted-foreground">
+                           {format(new Date(user.created_at), "dd/MM/yyyy")}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                           <div className="flex items-center justify-end gap-2">
+                              <button 
+                                onClick={() => setDetailUser({
+                                  id: user.id,
+                                  email: user.email,
+                                  name: user.full_name || 'Usuário'
+                                })}
+                                className="p-1.5 text-muted-foreground hover:text-primary transition-colors" 
+                                title="Ver Indicações e Saques"
+                              >
+                                 <Eye className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => setUserToToggle(user)}
+                                className={`p-1.5 transition-colors ${user.status === 'blocked' ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:text-destructive'}`} 
+                                title={user.status === 'blocked' ? "Desbloquear Acesso" : "Bloquear Acesso"}
+                              >
+                                 <ShieldBan className="w-4 h-4" />
+                              </button>
+                              
+                              <DropdownMenu.Root>
+                                <DropdownMenu.Trigger asChild>
+                                  <button className="p-1.5 text-muted-foreground hover:bg-muted rounded-md transition-colors outline-none">
+                                    <MoreVertical className="w-4 h-4" />
+                                  </button>
+                                </DropdownMenu.Trigger>
+                                <DropdownMenu.Portal>
+                                  <DropdownMenu.Content className="z-[50] min-w-[160px] bg-card border border-border p-1.5 rounded-xl shadow-xl animate-in fade-in-0 zoom-in-95" align="end">
+                                    <DropdownMenu.Item 
+                                       onClick={() => setDetailUser({
+                                         id: user.id,
+                                         email: user.email,
+                                         name: user.full_name || 'Usuário'
+                                       })}
+                                       className="flex items-center gap-2 px-2.5 py-2 text-sm text-muted-foreground hover:text-foreground outline-none cursor-pointer rounded-lg hover:bg-muted transition-colors"
+                                    >
+                                       <Eye className="w-4 h-4" />
+                                       Ver Indicações / Saques
+                                    </DropdownMenu.Item>
+                                    <DropdownMenu.Item 
+                                       onClick={() => {
+                                         setSelectedPlan(user.plan_type === 'básico' ? 'Starter' : user.plan_type || 'Starter');
+                                         setUserToChangePlan(user);
+                                       }}
+                                       className="flex items-center gap-2 px-2.5 py-2 text-sm text-muted-foreground hover:text-foreground outline-none cursor-pointer rounded-lg hover:bg-muted transition-colors"
+                                    >
+                                       <ArrowUpCircle className="w-4 h-4" />
+                                       Alterar Plano
+                                    </DropdownMenu.Item>
+                                    <DropdownMenu.Item 
+                                       onClick={() => setUserToToggle(user)}
+                                       className={`flex items-center gap-2 px-2.5 py-2 text-sm outline-none cursor-pointer rounded-lg transition-colors ${user.status === 'blocked' ? 'text-success hover:bg-success/10' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
+                                    >
+                                       <ShieldBan className="w-4 h-4" />
+                                       {user.status === 'blocked' ? "Desbloquear Usuário" : "Bloquear Usuário"}
+                                    </DropdownMenu.Item>
+                                    <DropdownMenu.Separator className="h-px bg-border my-1" />
+                                    <DropdownMenu.Item 
+                                       onClick={() => setUserToDelete(user)}
+                                       className="flex items-center gap-2 px-2.5 py-2 text-sm text-destructive hover:bg-destructive/10 outline-none cursor-pointer rounded-lg transition-colors"
+                                    >
+                                       <Trash2 className="w-4 h-4" />
+                                       Excluir Usuário
+                                    </DropdownMenu.Item>
+                                  </DropdownMenu.Content>
+                                </DropdownMenu.Portal>
+                              </DropdownMenu.Root>
+                           </div>
+                        </td>
+                     </tr>
+                   );
+                 })
                )}
             </tbody>
          </table>
       </div>
+
+      <UserAffiliateDetailsModal 
+        open={!!detailUser} 
+        onOpenChange={(o) => !o && setDetailUser(null)} 
+        userId={detailUser?.id || null}
+        userEmail={detailUser?.email || null}
+        userName={detailUser?.name || null}
+        commissions={commissions}
+        payouts={payouts}
+        referrals={referrals}
+      />
     </div>
   );
 }
