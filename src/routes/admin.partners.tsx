@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus, Trash2, Loader2, Edit, Eye } from "lucide-react";
+import { Handshake, Users, Check, X, DollarSign, ExternalLink, UserPlus, Trash2, Loader2, Edit, Eye, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getAdminPayoutRequests, getAdminCommissions, markPayoutAsPaid, getAdminPartners, removePartner, rejectPayoutRequest, getAdminReferrals } from "@/lib/referrals";
 import { ManagePartnerModal } from "@/components/admin/ManagePartnerModal";
@@ -12,6 +12,13 @@ import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/admin/partners")({
@@ -39,6 +46,9 @@ function AdminPartners() {
   
   const [payoutToReject, setPayoutToReject] = useState<any>(null);
   const [rejectingPayout, setRejectingPayout] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     fetchData();
@@ -128,6 +138,26 @@ function AdminPartners() {
     }
   };
 
+  const filteredPayouts = payouts.filter((p) => {
+    if (statusFilter !== "all" && p.status !== statusFilter) {
+      return false;
+    }
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase();
+      const userName = (p.user?.raw_user_meta_data?.name || "").toLowerCase();
+      const userEmail = (p.user?.email || "").toLowerCase();
+      const pixName = (p.pix_name || "").toLowerCase();
+      const pixKey = (p.pix_key || "").toLowerCase();
+      return (
+        userName.includes(q) ||
+        userEmail.includes(q) ||
+        pixName.includes(q) ||
+        pixKey.includes(q)
+      );
+    }
+    return true;
+  });
+
   const pendingPayouts = payouts.filter(p => p.status === 'requested');
 
   return (
@@ -162,13 +192,39 @@ function AdminPartners() {
       </div>
 
       <div className="bg-card border border-border rounded-2xl overflow-hidden mt-6">
-        <div className="p-6 border-b border-border">
+        <div className="p-6 border-b border-border flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <h3 className="font-bold text-lg">Solicitações de Saque</h3>
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            {/* Input de busca */}
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por usuário, email, pix..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 text-xs"
+              />
+            </div>
+            {/* Filtro de status */}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-40 h-9 text-xs">
+                <SelectValue placeholder="Todos os status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os status</SelectItem>
+                <SelectItem value="requested">Pendente</SelectItem>
+                <SelectItem value="paid">Pago</SelectItem>
+                <SelectItem value="rejected">Rejeitado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         {loading ? (
           <div className="p-8 text-center text-muted-foreground">Carregando...</div>
         ) : payouts.length === 0 ? (
           <div className="p-8 text-center text-muted-foreground">Nenhuma solicitação de saque.</div>
+        ) : filteredPayouts.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground">Nenhuma solicitação encontrada com os filtros atuais.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -183,7 +239,7 @@ function AdminPartners() {
                 </tr>
               </thead>
               <tbody>
-                {payouts.map((p) => (
+                {filteredPayouts.map((p) => (
                   <tr key={p.id} className="border-b border-border/50 hover:bg-muted/20">
                     <td className="px-6 py-4">{new Date(p.created_at).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
