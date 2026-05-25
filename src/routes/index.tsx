@@ -1453,8 +1453,8 @@ function CTA() {
         <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full gradient-primary opacity-30 blur-3xl" />
         <div className="relative">
           <Zap className="h-8 w-8 mx-auto text-primary mb-4" />
-          <h3 className="text-3xl md:text-4xl font-semibold tracking-tight">Pronto para operar como uma startup Series A?</h3>
-          <p className="mt-3 text-muted-foreground max-w-xl mx-auto">Junte-se a 12.000+ empresas que escalam com GestãoShop.</p>
+          <h3 className="text-3xl md:text-4xl font-semibold tracking-tight">Pronto para organizar sua loja e vender muito mais?</h3>
+          <p className="mt-3 text-muted-foreground max-w-xl mx-auto">Junte-se a milhares de lojistas que simplificam o controle de estoque, registram vendas e dominam o financeiro com o GestãoShop.</p>
           <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to="/login" search={{ mode: "signup" }} className="group h-12 px-6 rounded-xl gradient-primary text-white text-[14px] font-semibold inline-flex items-center gap-2 glow-primary hover:shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300">
               Começar grátis <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
