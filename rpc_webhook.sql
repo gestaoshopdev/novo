@@ -91,7 +91,7 @@ BEGIN
       ELSIF v_referrer_plan = 'Elite' THEN
         v_percentage := 0.20;
       ELSIF v_referrer_plan = 'Pro' THEN
-        v_percentage := 0.10;
+        v_percentage := 0.15;
       ELSE
         v_percentage := 0;
       END IF;

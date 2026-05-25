@@ -23,7 +23,7 @@ function ReferralPage() {
   const { plan, planStatus, name, isPartner, commissionRate } = useProfile();
   const { user } = useAuth();
   
-  const rateToDisplay = isPartner ? `${commissionRate}%` : (plan === 'Elite' ? '20%' : '10%');
+  const rateToDisplay = isPartner ? `${commissionRate}%` : (plan === 'Elite' ? '20%' : '15%');
   
   const cleanName = (name.split(' ')[0] || "SEUNOME").toUpperCase().replace(/[^A-Z0-9]/g, '');
   const exampleCode = `${cleanName}10`;
@@ -198,7 +198,7 @@ function ReferralPage() {
             <h2 className="text-3xl font-bold tracking-tight">Recurso Exclusivo para Assinantes Ativos</h2>
             <p className="text-muted-foreground text-lg">
               Ative sua assinatura (Pro ou Elite) para liberar seu Link de Indicação Exclusivo. 
-              Ganhe 10% (Pro) ou 20% (Elite) de comissão recorrente por cada amigo indicado!
+              Ganhe 15% (Pro) ou 20% (Elite) de comissão recorrente por cada amigo indicado!
             </p>
             
             <div className="pt-4">
