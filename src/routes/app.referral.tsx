@@ -132,7 +132,15 @@ function ReferralPage() {
   const pendingAmount = commissions.filter(c => c.status === 'pending').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
   const baseAvailableAmount = commissions.filter(c => c.status === 'available').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
   const processingPayoutsAmount = payoutRequests.filter(p => p.status === 'requested').reduce((acc, p) => acc + p.amount_cents, 0) / 100;
-  const availableAmount = Math.max(0, baseAvailableAmount - processingPayoutsAmount + simulatedBalance);
+  const availableAmount = Math.max(0, baseAvailableAmount - processingPayoutsAmount) + simulatedBalance;
+  console.log("DEBUG BALANCES:", {
+    baseAvailableAmount,
+    processingPayoutsAmount,
+    simulatedBalance,
+    availableAmount,
+    commissionsCount: commissions.length,
+    payoutRequestsCount: payoutRequests.length
+  });
   const withdrawnAmount = commissions.filter(c => c.status === 'withdrawn').reduce((acc, c) => acc + c.amount_cents, 0) / 100;
 
   const getPayoutCooldownInfo = () => {
@@ -278,6 +286,11 @@ function ReferralPage() {
               <div>
                 <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-1">Saldo Disponível</p>
                 <p className="text-4xl font-black text-foreground">{formatBRL(availableAmount)}</p>
+                {user?.email === 'jcasales15@gmail.com' && (
+                  <p className="text-[10px] text-muted-foreground mt-1 font-mono">
+                    [Base: {baseAvailableAmount} | Proc: {processingPayoutsAmount} | Sim: {simulatedBalance}]
+                  </p>
+                )}
               </div>
               <Button 
                 onClick={() => setPayoutModalOpen(true)} 
