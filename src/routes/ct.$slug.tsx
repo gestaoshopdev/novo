@@ -86,8 +86,7 @@ function PublicCatalogPage() {
   const limits = PLANS[currentPlanId]?.limits || PLANS.starter.limits;
 
   const { colors, layout, show_brand, name, banner_text, profile_photo, whatsapp, instagram } = catalog;
-  const forceBrand = !limits.removeWatermark;
-  const finalShowBrand = forceBrand || show_brand;
+  const finalShowBrand = !limits.removeWatermark;
 
   const handleWhatsApp = (productName?: string) => {
     if (!whatsapp) return;

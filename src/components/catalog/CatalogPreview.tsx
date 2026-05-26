@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Store, Monitor, Smartphone, Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { getProducts, getCatalogProducts } from "@/lib/api";
+import { useProfile } from "@/contexts/ProfileContext";
+import { PLANS } from "@/lib/abacatepay";
 
 interface CatalogPreviewProps {
   settings: CatalogSettings;
@@ -11,6 +13,11 @@ interface CatalogPreviewProps {
 }
 
 export function CatalogPreview({ settings, mode, onModeChange }: CatalogPreviewProps) {
+  const { plan } = useProfile();
+  const currentPlanId = (plan.toLowerCase() === 'básico' ? 'starter' : plan.toLowerCase()) as keyof typeof PLANS;
+  const limits = PLANS[currentPlanId]?.limits || PLANS.starter.limits;
+  const finalShowBrand = !limits.removeWatermark;
+
   const { data: allProducts = [] } = useQuery({
     queryKey: ["products"],
     queryFn: getProducts,
@@ -149,7 +156,7 @@ export function CatalogPreview({ settings, mode, onModeChange }: CatalogPreviewP
               ))}
             </div>
           </div>
-          {settings.show_brand && (
+          {finalShowBrand && (
             <div className="py-4 text-center border-t border-border/10 mt-4 opacity-50">
               <p className="text-[10px]" style={{ color: settings.colors.text }}>
                 Criado com <span className="font-bold">GestãoShop</span>

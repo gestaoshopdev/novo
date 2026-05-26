@@ -484,20 +484,18 @@ export function CatalogForm({ settings, onChange, onSave, isSaving }: CatalogFor
               </div>
 
               <div className="flex items-center justify-between p-4 bg-muted/30 rounded-lg border border-border/50">
-                <div>
-                  <Label htmlFor="show_brand" className="text-foreground font-medium cursor-pointer">Exibir marca GestãoShop no rodapé</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {limits.removeWatermark ? "Você pode ocultar a marca no seu plano." : "Disponível apenas no plano Elite."}
-                  </p>
-                </div>
-                <Switch 
-                  id="show_brand" 
-                  checked={!limits.removeWatermark ? true : settings.show_brand}
-                  onCheckedChange={(checked) => updateField("show_brand", checked)}
-                  disabled={!limits.removeWatermark}
-                  className="data-[state=checked]:bg-primary"
-                />
-              </div>
+                 <div>
+                   <Label className="text-foreground font-medium">Marca d'água GestãoShop no rodapé</Label>
+                   <p className="text-sm text-muted-foreground">
+                     {!limits.removeWatermark ? "Seu plano (Starter/Pro) exibe a marca no rodapé." : "Seu plano (Elite) removeu a marca d'água do rodapé."}
+                   </p>
+                 </div>
+                 <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${
+                   !limits.removeWatermark ? 'bg-orange-500/15 text-orange-500' : 'bg-emerald-500/15 text-emerald-500'
+                 }`}>
+                   {!limits.removeWatermark ? 'Ativa' : 'Removida'}
+                 </span>
+               </div>
 
               <div className="pt-4 border-t border-border">
                 <h4 className="text-sm font-medium text-muted-foreground mb-4">Cores dos cards de produto</h4>

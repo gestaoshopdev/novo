@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion } from "framer-motion";
-import { Search, MoreVertical, ShieldBan, ArrowUpCircle, UserPlus, Loader2, Trash2, Eye, Gift } from "lucide-react";
+import { Search, MoreVertical, ShieldBan, ArrowUpCircle, UserPlus, Loader2, Trash2, Eye, Gift, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { AddUserModal } from "@/components/admin/AddUserModal";
 import { supabase } from "@/lib/supabase";
