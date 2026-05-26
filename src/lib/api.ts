@@ -47,8 +47,18 @@ async function getUserId() {
 }
 
 export async function getPublicProfile(userId: string) {
-  const { data } = await supabase.from("profiles").select("plan_type").eq("id", userId).maybeSingle();
-  return data;
+  try {
+    const { data, error } = await supabase.rpc("get_public_profile", { p_user_id: userId });
+    if (error) {
+      console.warn("RPC get_public_profile failed, falling back to direct select:", error);
+      const { data: fallbackData } = await supabase.from("profiles").select("plan_type").eq("id", userId).maybeSingle();
+      return fallbackData;
+    }
+    return data;
+  } catch (err) {
+    console.error("Error fetching public profile:", err);
+    return null;
+  }
 }
 
 // Helper para fazer upload de strings Base64 para o Supabase Storage
