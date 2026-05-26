@@ -28,7 +28,23 @@ BEGIN
   v_is_first_payment := COALESCE(v_is_first_payment, true);
 
   -- 2. Calcular nova data de expiração (+30 dias)
-  v_new_expiry := to_char(timezone('utc'::text, now() + interval '30 days'), 'YYYY-MM-DD"T"HH24:MI:SS"Z"');
+  -- Se o plano atual ainda não estiver vencido, somar 30 dias a partir da data de vencimento atual.
+  -- Senão, somar 30 dias a partir de agora.
+  DECLARE
+    v_current_expiry timestamptz;
+  BEGIN
+    SELECT (raw_user_meta_data->>'plan_expiry')::timestamptz INTO v_current_expiry
+    FROM auth.users
+    WHERE id = p_user_id;
+    
+    IF v_current_expiry IS NOT NULL AND v_current_expiry > now() THEN
+      v_new_expiry := to_char(timezone('utc'::text, v_current_expiry + interval '30 days'), 'YYYY-MM-DD"T"HH24:MI:SS"Z"');
+    ELSE
+      v_new_expiry := to_char(timezone('utc'::text, now() + interval '30 days'), 'YYYY-MM-DD"T"HH24:MI:SS"Z"');
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    v_new_expiry := to_char(timezone('utc'::text, now() + interval '30 days'), 'YYYY-MM-DD"T"HH24:MI:SS"Z"');
+  END;
 
   -- 3. Atualizar auth.users (user_metadata)
   UPDATE auth.users
