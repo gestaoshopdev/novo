@@ -781,14 +781,6 @@ function SettingsPage() {
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">Escolha como e quando você quer ser alertado</p>
                 </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleTestNotif}
-                  className="h-9 gap-2"
-                >
-                  <Zap className="h-4 w-4" /> Testar Notificações
-                </Button>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
@@ -886,23 +878,6 @@ function SettingsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Canais de Suporte */}
               <div className="lg:col-span-2 space-y-6">
-                <div className="bg-card border border-border rounded-2xl p-8 space-y-6">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                        <HelpCircle className="h-5 w-5" />
-                      </div>
-                      <h2 className="text-xl font-bold tracking-tight text-white">Precisa de Ajuda?</h2>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Tem dúvidas ou encontrou algum problema? Nossa equipe está pronta para ajudar você.
-                    </p>
-                  </div>
-
-                  <button className="flex items-center gap-3 px-6 h-12 rounded-xl bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-all font-bold text-sm">
-                    <Mail className="h-4 w-4" /> Enviar Email para Suporte
-                  </button>
-                </div>
 
                 <div className="p-1 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-transparent border border-emerald-500/20">
                   <div className="p-8 rounded-[14px] bg-[#0c1a14]/60 space-y-6">

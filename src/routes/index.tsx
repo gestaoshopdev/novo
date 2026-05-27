@@ -36,9 +36,8 @@ function Landing() {
       <AllFeaturesSection />
       <CatalogFeatureSection />
       <ReportsSection />
-      <FAQSection />
       <Pricing />
-      <CTA />
+      <FAQSection />
       <Footer />
     </div>
   );
@@ -46,16 +45,21 @@ function Landing() {
 
 function Nav() {
   return (
-    <nav className="sticky top-0 z-40 glass-strong border-b border-border/40">
+    <nav className="fixed top-0 left-0 right-0 w-full z-50 glass-strong border-b border-border/40">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src={Logo} alt="GestãoShop" className="h-24 w-auto drop-shadow-[0_0_15px_rgba(var(--primary),0.3)] hover:scale-105 transition-transform" />
+          <a href="#" onClick={(e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}>
+            <img src={Logo} alt="GestãoShop" className="h-24 w-auto drop-shadow-[0_0_15px_rgba(var(--primary),0.3)] hover:scale-105 transition-transform cursor-pointer" />
+          </a>
         </div>
         <div className="hidden md:flex items-center gap-8 text-[13px] text-muted-foreground">
-          <a href="#features" className="hover:text-foreground transition">Produto</a>
-          <a href="#preview" className="hover:text-foreground transition">Plataforma</a>
-          <a href="#pricing" className="hover:text-foreground transition">Preços</a>
-          <a href="#" className="hover:text-foreground transition">Documentação</a>
+          <a href="#produto" className="hover:text-foreground transition">Recursos</a>
+          <a href="#plataforma" className="hover:text-foreground transition">Plataforma</a>
+          <a href="#precos" className="hover:text-foreground transition">Planos</a>
+          <a href="#documentacao" className="hover:text-foreground transition">FAQ</a>
         </div>
         <div className="flex items-center gap-2">
           <Link to="/login" className="hidden sm:inline text-[13px] text-muted-foreground hover:text-foreground transition px-3 py-1.5">Entrar</Link>
@@ -559,7 +563,7 @@ function ReportsMockup() {
 
 function ReportsSection() {
   return (
-    <section className="relative py-32 overflow-hidden bg-background">
+    <section className="relative py-32 overflow-hidden bg-[#0A0D14]">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-16 items-center">
           
@@ -853,7 +857,7 @@ const allFeatures = [
 
 function AllFeaturesSection() {
   return (
-    <section className="relative py-24 overflow-hidden bg-background">
+    <section id="produto" className="relative py-24 overflow-hidden bg-background">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col items-center text-center mb-16">
           <motion.div
@@ -905,7 +909,7 @@ function AllFeaturesSection() {
 function CatalogFeatureSection() {
   return (
     <>
-      <section className="relative py-32 overflow-hidden bg-background">
+      <section id="plataforma" className="relative py-32 overflow-hidden bg-background">
         <div className="max-w-7xl mx-auto px-6">
            {/* Section 1: Hero-like */}
            <div className="flex flex-col lg:flex-row items-center gap-16">
@@ -1261,31 +1265,7 @@ function CatalogFeatureSection() {
         </div>
       </section>
 
-      {/* Section 4: Bottom CTA inside Catalog */}
-      <section className="py-24 bg-background">
-         <div className="max-w-4xl mx-auto px-6 text-center">
-            <motion.div 
-               initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
-               className="relative rounded-[2rem] bg-[#10131C] border border-white/5 p-12 overflow-hidden shadow-2xl"
-            >
-               <div className="absolute inset-0 gradient-primary opacity-10 blur-3xl -z-10" />
-               <p className="text-[10px] font-bold tracking-widest uppercase text-primary mb-4">Pronto para começar?</p>
-               <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-4">Crie agora seu catálogo e comece a vender mais.</h2>
-               <p className="text-[15px] text-muted-foreground mb-10">É rápido, fácil e gratuito para começar.</p>
-               
-               <div className="flex flex-col items-center gap-6">
-                  <Link to="/login" search={{ mode: "signup" }} className="group h-12 px-8 rounded-xl gradient-primary text-white text-[15px] font-semibold inline-flex items-center gap-2 glow-primary hover:shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300">
-                     Começar grátis <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-                  </Link>
-                  <div className="flex flex-wrap items-center justify-center gap-6 text-[12px] text-muted-foreground">
-                     <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Sem cartão de crédito</span>
-                     <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Setup em 2 minutos</span>
-                     <span className="flex items-center gap-1.5"><Check className="h-3.5 w-3.5" /> Cancele quando quiser</span>
-                  </div>
-               </div>
-            </motion.div>
-         </div>
-      </section>
+
     </>
   );
 }
@@ -1315,7 +1295,7 @@ function FAQSection() {
   ];
 
   return (
-    <section className="relative py-24 overflow-hidden bg-surface/30 border-t border-border/40">
+    <section id="documentacao" className="relative py-24 overflow-hidden bg-[#0A0D14] border-t border-border/40">
       <div className="max-w-3xl mx-auto px-6">
         <div className="text-center mb-12">
           <motion.div
@@ -1389,8 +1369,9 @@ const plans = [
 
 function Pricing() {
   return (
-    <section id="pricing" className="max-w-7xl mx-auto px-6 py-24">
-      <div className="flex flex-col items-center w-full max-w-5xl mx-auto text-center mb-14">
+    <section id="precos" className="relative py-24 bg-gradient-to-b from-background via-surface/30 to-background">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col items-center w-full max-w-5xl mx-auto text-center mb-14">
          <motion.div
             initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-[11px] font-bold tracking-widest uppercase text-primary mb-6"
@@ -1440,43 +1421,15 @@ function Pricing() {
 
       {/* Tabela Comparativa de Planos */}
       <PricingComparisonTable className="mt-20 max-w-5xl mx-auto" />
+      </div>
     </section>
   );
 }
 
-function CTA() {
-  return (
-    <section className="max-w-5xl mx-auto px-6 pb-24">
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        className="relative overflow-hidden rounded-3xl p-12 text-center border border-primary/30 glass"
-      >
-        <div className="absolute inset-0 gradient-primary opacity-15" />
-        <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full gradient-primary opacity-30 blur-3xl" />
-        <div className="relative">
-          <Zap className="h-8 w-8 mx-auto text-primary mb-4" />
-          <h3 className="text-3xl md:text-4xl font-semibold tracking-tight">Pronto para organizar sua loja e vender muito mais?</h3>
-          <p className="mt-3 text-muted-foreground max-w-xl mx-auto">Junte-se a milhares de lojistas que simplificam o controle de estoque, registram vendas e dominam o financeiro com o GestãoShop.</p>
-          <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Link to="/login" search={{ mode: "signup" }} className="group h-12 px-6 rounded-xl gradient-primary text-white text-[14px] font-semibold inline-flex items-center gap-2 glow-primary hover:shadow-lg hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300">
-              Começar grátis <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
-            <div className="flex items-center gap-1 text-[12px] text-muted-foreground">
-              {Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-warning text-warning" />)}
-              <span className="ml-1.5">4.9/5 · 1.200+ reviews</span>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    </section>
-  );
-}
 
 function Footer() {
   return (
-    <footer className="border-t border-border/40 py-10">
+    <footer className="bg-[#0A0D14] border-t border-border/40 py-10">
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-[12px] text-muted-foreground">
         <div className="flex items-center gap-2">
           <img src={Icon} alt="GestãoShop" className="h-8 w-8" />
