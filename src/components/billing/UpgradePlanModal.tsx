@@ -5,6 +5,7 @@ import { PLANS, createUpgradeBilling } from "@/lib/abacatepay";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import Logo from "@/assets/logo.png";
 
 interface UpgradePlanModalProps {
   open: boolean;
@@ -106,9 +107,9 @@ export function UpgradePlanModal({ open, onOpenChange }: UpgradePlanModalProps) 
         </DialogHeader>
 
         <div className="flex flex-col h-full overflow-y-auto">
-          <div className="p-8 text-center space-y-2 border-b border-border/50 bg-gradient-to-br from-background via-background to-primary/5">
-              <div className="mx-auto w-12 h-12 rounded-xl gradient-primary flex items-center justify-center mb-4">
-                <Sparkles className="h-6 w-6 text-white" />
+          <div className="px-8 pb-8 pt-2 text-center space-y-2 border-b border-border/50 bg-gradient-to-br from-background via-background to-primary/5">
+              <div className="mx-auto flex items-center justify-center mb-0">
+                <img src={Logo} alt="GestãoShop" className="h-28 w-auto" />
               </div>
               <h2 className="text-2xl font-bold tracking-tight">Faça o Upgrade do seu Plano</h2>
               {discount > 0 ? (

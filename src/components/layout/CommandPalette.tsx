@@ -30,7 +30,6 @@ export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenCh
               <CommandItem onSelect={() => go("/app/cashflow")}><Wallet className="h-4 w-4"/>Fluxo de caixa</CommandItem>
               <CommandItem onSelect={() => go("/app/analytics")}><BarChart3 className="h-4 w-4"/>Analytics</CommandItem>
               <CommandItem onSelect={() => go("/app/crm")}><Users className="h-4 w-4"/>CRM</CommandItem>
-              <CommandItem onSelect={() => go("/app/automations")}><Zap className="h-4 w-4"/>Automações</CommandItem>
               <CommandItem onSelect={() => go("/app/settings")}><Settings className="h-4 w-4"/>Configurações</CommandItem>
             </CommandGroup>
           </CommandList>

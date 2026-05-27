@@ -349,9 +349,9 @@ function SettingsPage() {
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
               <span className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border",
-                planStatus === "expired" ? "bg-red-500/15 text-red-500 border-red-500/20" : "bg-warning/15 text-warning border-warning/20"
+                planStatus === "expired" ? "bg-red-500/15 text-red-500 border-red-500/20" : "gradient-primary text-white glow-primary border-transparent"
               )}>
-                <Crown className="h-3 w-3" /> {planStatus === "trial" ? "Teste Grátis" : planStatus === "expired" ? "Plano Expirado" : "Plano Ativo"}
+                <Crown className="h-3 w-3" /> {planStatus === "trial" ? "Teste Grátis" : planStatus === "expired" ? "Plano Expirado" : `Plano ${plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Starter'}`}
               </span>
               <span className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border",
@@ -436,14 +436,14 @@ function SettingsPage() {
                   <h3 className="font-bold">Estatísticas Detalhadas</h3>
                 </div>
                 
-                <div className="space-y-3.5">
+                <div className="space-y-1">
                   <StatRow label="Categorias" value={categories.length.toString()} />
                   <StatRow label="Receita Total" value={formatBRL(stats.revenue)} />
                   <StatRow label="Lucro Bruto" value={formatBRL(stats.revenue - (stats.revenue * 0.4))} />
                   <StatRow label="Despesas" value="R$ 0,00" negative />
                   <StatRow label="Ticket Médio" value={formatBRL(stats.avgTicket)} />
                   <StatRow label="Margem de Lucro" value={`${stats.margin.toFixed(2)}%`} success />
-                  <div className="h-px bg-border my-2" />
+                  <div className="h-px bg-border/40 my-3 mx-2" />
                   <StatRow label="Canais de Venda" value={channels.length.toString()} bold />
                   <StatRow label="Formas de Pagamento" value={paymentMethods.length.toString()} bold />
                 </div>
@@ -467,13 +467,31 @@ function SettingsPage() {
               <p className="text-sm text-muted-foreground mt-1">Gerencie sua assinatura, renove ou faça upgrade.</p>
             </div>
 
+            {/* Plan Info Card */}
+            <div className="bg-background/40 border border-border rounded-xl p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+                    <Crown className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">Plano Atual</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">O plano que você tem assinado no momento</p>
+                  </div>
+                </div>
+                <span className="text-lg font-bold gradient-primary text-transparent bg-clip-text">
+                  {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "Starter"}
+                </span>
+              </div>
+            </div>
+
             {/* Expiration Card */}
             <div className="bg-background/40 border border-border rounded-xl p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className={cn(
                     "h-10 w-10 rounded-lg flex items-center justify-center",
-                    planStatus === "expired" ? "bg-red-500/10 text-red-500" : "bg-success/10 text-success"
+                    planStatus === "expired" ? "bg-red-500/10 text-red-500" : "bg-primary/10 text-primary"
                   )}>
                     <Calendar className="h-5 w-5" />
                   </div>
@@ -488,7 +506,7 @@ function SettingsPage() {
                 </div>
                 <span className={cn(
                   "text-lg font-bold",
-                  planStatus === "expired" ? "text-red-500" : "text-success"
+                  planStatus === "expired" ? "text-red-500" : "text-primary"
                 )}>
                   {planExpiry ? new Date(planExpiry).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : "—"}
                 </span>
@@ -506,7 +524,7 @@ function SettingsPage() {
             {/* Action Button */}
             <button 
               onClick={() => setUpgradeModalOpen(true)}
-              className="w-full bg-success hover:bg-success/90 text-success-foreground h-12 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-success/20"
+              className="w-full gradient-primary glow-primary border-transparent hover:opacity-90 text-white h-12 rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity shadow-lg"
             >
               <Crown className="h-4 w-4" /> Ver Planos e Fazer Upgrade
             </button>
@@ -574,7 +592,7 @@ function SettingsPage() {
 
                     <Button 
                       onClick={handleSavePersonal}
-                      className="bg-success hover:bg-success/90 text-success-foreground gap-2 font-bold h-10 px-6 mt-2"
+                      className="gradient-primary glow-primary border-transparent hover:opacity-90 text-white gap-2 font-bold h-10 px-6 mt-2 transition-opacity shadow-lg"
                     >
                        <User className="h-4 w-4" /> Salvar Alterações
                     </Button>
@@ -855,7 +873,7 @@ function SettingsPage() {
               <div className="pt-4 flex items-center justify-end border-t border-border mt-8">
                 <Button 
                   onClick={handleSaveNotifs}
-                  className="bg-primary hover:opacity-90 text-white font-bold h-11 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all"
+                  className="gradient-primary glow-primary border-transparent hover:opacity-90 text-white font-bold h-11 px-8 rounded-xl shadow-lg transition-opacity"
                 >
                   Salvar Preferências
                 </Button>
@@ -1015,18 +1033,30 @@ function Shortcut({ to, icon: Icon, label, color }: { to: string; icon: any; lab
 
 function InfoItem({ label, value, icon: Icon, badge }: { label: string; value: string; icon: any; badge?: string }) {
   return (
-    <div className="space-y-1.5">
-      <p className="text-xs font-medium text-muted-foreground flex items-center gap-2">
-        {label}
-      </p>
-      <div className="flex items-center gap-3">
-        {badge === "success" ? (
-           <span className="text-sm font-bold text-success flex items-center gap-2">
-             <Crown className="h-3.5 w-3.5" /> {value}
-           </span>
-        ) : (
-          <span className="text-sm font-bold text-foreground">{value}</span>
-        )}
+    <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/20 border border-border/50 hover:bg-muted/40 transition-colors">
+      <div className={cn(
+        "h-10 w-10 flex-shrink-0 flex items-center justify-center rounded-xl",
+        badge === "success" ? "bg-success/10 text-success" :
+        badge === "destructive" ? "bg-destructive/10 text-destructive" :
+        "bg-primary/10 text-primary"
+      )}>
+        {Icon && <Icon className="h-5 w-5" />}
+      </div>
+      <div className="flex-1 space-y-1">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {label}
+        </p>
+        <div className="flex items-center gap-2">
+          {badge === "success" ? (
+             <span className="text-sm font-bold text-success flex items-center gap-1.5">
+               <Crown className="h-3.5 w-3.5" /> {value}
+             </span>
+          ) : badge === "destructive" ? (
+            <span className="text-sm font-bold text-destructive">{value}</span>
+          ) : (
+            <span className="text-sm font-bold text-white">{value}</span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1034,12 +1064,13 @@ function InfoItem({ label, value, icon: Icon, badge }: { label: string; value: s
 
 function StatRow({ label, value, negative, success, bold }: { label: string; value: string; negative?: boolean; success?: boolean; bold?: boolean }) {
   return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
+    <div className="flex items-center justify-between py-2.5 px-4 rounded-xl hover:bg-muted/30 transition-all group relative overflow-hidden">
+      <div className="absolute inset-y-0 left-0 w-1 bg-primary/0 group-hover:bg-primary/50 transition-colors" />
+      <span className="text-sm font-medium text-muted-foreground group-hover:text-foreground/90 transition-colors">{label}</span>
       <span className={cn(
-        "font-bold font-mono-tabular",
-        negative ? "text-destructive" : success ? "text-success" : "text-foreground",
-        bold && "text-base"
+        "font-bold font-mono-tabular tracking-tight",
+        negative ? "text-destructive" : success ? "text-success" : "text-white",
+        bold && "text-[15px] text-primary"
       )}>
         {value}
       </span>
