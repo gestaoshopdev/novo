@@ -4,6 +4,7 @@ import { Check, Loader2, Sparkles, X } from "lucide-react";
 import { PLANS, createUpgradeBilling } from "@/lib/abacatepay";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { PricingComparisonTable } from "@/components/billing/PricingComparisonTable";
 import { supabase } from "@/lib/supabase";
 import Logo from "@/assets/logo.png";
 
@@ -99,14 +100,14 @@ export function UpgradePlanModal({ open, onOpenChange }: UpgradePlanModalProps) 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
-        "max-w-4xl p-0 overflow-hidden border-none bg-background"
+        "max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden border-none bg-background"
       )}>
         <DialogHeader className="sr-only">
           <DialogTitle>Upgrade de Plano</DialogTitle>
           <DialogDescription>Escolha um plano para fazer o upgrade da sua conta.</DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col h-full overflow-y-auto">
+        <div className="flex flex-col flex-1 overflow-y-auto">
           <div className="px-8 pb-8 pt-2 text-center space-y-2 border-b border-border/50 bg-gradient-to-br from-background via-background to-primary/5">
               <div className="mx-auto flex items-center justify-center mb-0">
                 <img src={Logo} alt="GestãoShop" className="h-28 w-auto" />
@@ -193,6 +194,11 @@ export function UpgradePlanModal({ open, onOpenChange }: UpgradePlanModalProps) 
                   </button>
                 </div>
               ))}
+            </div>
+            
+            {/* Tabela de Comparação */}
+            <div className="p-8 pt-0 bg-muted/20 border-t border-border/10">
+              <PricingComparisonTable className="mt-8" />
             </div>
           </div>
       </DialogContent>

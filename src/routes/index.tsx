@@ -10,6 +10,7 @@ import Logo from "@/assets/logo.png";
 import Icon from "@/assets/icon.png";
 import KitFerramentasImg from "@/assets/kit-ferramentas.png";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
+import { PricingComparisonTable } from "@/components/billing/PricingComparisonTable";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -1436,6 +1437,9 @@ function Pricing() {
           </motion.div>
         ))}
       </div>
+
+      {/* Tabela Comparativa de Planos */}
+      <PricingComparisonTable className="mt-20 max-w-5xl mx-auto" />
     </section>
   );
 }
