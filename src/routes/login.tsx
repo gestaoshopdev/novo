@@ -179,7 +179,7 @@ function LoginPage() {
 
         if (error) throw error;
         
-        toast.success("Conta criada! Verifique seu e-mail.");
+        toast.success("Conta criada com sucesso!");
 
         const { error: signErr } = await supabase.auth.signInWithPassword({
           email,
