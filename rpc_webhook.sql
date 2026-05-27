@@ -64,6 +64,9 @@ BEGIN
   SET plan_type = p_plan
   WHERE id = p_user_id;
 
+  -- Enforçar limites de catálogos do novo plano
+  PERFORM enforce_catalog_limits(p_user_id, p_plan);
+
   -- 5. Lógica de Comissionamento (Indique e Ganhe)
   -- 5.1 Verificar se o usuário foi indicado
   SELECT referrer_id INTO v_referrer_id

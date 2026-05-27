@@ -35,5 +35,8 @@ BEGIN
   SET plan_type = new_plan
   WHERE id = target_user_id;
 
+  -- Enforçar limites de catálogos do novo plano
+  PERFORM enforce_catalog_limits(target_user_id, new_plan);
+
 END;
 $$;
