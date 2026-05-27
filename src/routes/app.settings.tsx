@@ -349,9 +349,9 @@ function SettingsPage() {
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
               <span className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border",
-                planStatus === "expired" ? "bg-red-500/15 text-red-500 border-red-500/20" : "bg-warning/15 text-warning border-warning/20"
+                planStatus === "expired" ? "bg-red-500/15 text-red-500 border-red-500/20" : "gradient-primary text-white glow-primary border-transparent"
               )}>
-                <Crown className="h-3 w-3" /> {planStatus === "trial" ? "Teste Grátis" : planStatus === "expired" ? "Plano Expirado" : "Plano Ativo"}
+                <Crown className="h-3 w-3" /> {planStatus === "trial" ? "Teste Grátis" : planStatus === "expired" ? "Plano Expirado" : `Plano ${plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Starter'}`}
               </span>
               <span className={cn(
                 "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border",
@@ -465,6 +465,24 @@ function SettingsPage() {
                 <h3 className="text-xl font-bold tracking-tight">Seu Plano</h3>
               </div>
               <p className="text-sm text-muted-foreground mt-1">Gerencie sua assinatura, renove ou faça upgrade.</p>
+            </div>
+
+            {/* Plan Info Card */}
+            <div className="bg-background/40 border border-border rounded-xl p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="h-10 w-10 rounded-lg flex items-center justify-center bg-primary/10 text-primary">
+                    <Crown className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground">Plano Atual</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">O plano que você tem assinado no momento</p>
+                  </div>
+                </div>
+                <span className="text-lg font-bold gradient-primary text-transparent bg-clip-text">
+                  {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : "Starter"}
+                </span>
+              </div>
             </div>
 
             {/* Expiration Card */}
