@@ -51,7 +51,6 @@ const groups: { label: string; items: Item[] }[] = [
     label: "Configurações e Suporte",
     items: [
       { to: "/app/tutorials", label: "Tutoriais", icon: GraduationCap },
-      { to: "/app/automations", label: "Automações", icon: Zap, badge: "Novo" },
       { to: "/app/settings", label: "Configurações", icon: Settings },
     ],
   },

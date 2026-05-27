@@ -473,7 +473,7 @@ function SettingsPage() {
                 <div className="flex items-center gap-4">
                   <div className={cn(
                     "h-10 w-10 rounded-lg flex items-center justify-center",
-                    planStatus === "expired" ? "bg-red-500/10 text-red-500" : "bg-success/10 text-success"
+                    planStatus === "expired" ? "bg-red-500/10 text-red-500" : "bg-primary/10 text-primary"
                   )}>
                     <Calendar className="h-5 w-5" />
                   </div>
@@ -488,7 +488,7 @@ function SettingsPage() {
                 </div>
                 <span className={cn(
                   "text-lg font-bold",
-                  planStatus === "expired" ? "text-red-500" : "text-success"
+                  planStatus === "expired" ? "text-red-500" : "text-primary"
                 )}>
                   {planExpiry ? new Date(planExpiry).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) : "—"}
                 </span>
@@ -506,7 +506,7 @@ function SettingsPage() {
             {/* Action Button */}
             <button 
               onClick={() => setUpgradeModalOpen(true)}
-              className="w-full bg-success hover:bg-success/90 text-success-foreground h-12 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-success/20"
+              className="w-full gradient-primary glow-primary border-transparent hover:opacity-90 text-white h-12 rounded-xl font-bold flex items-center justify-center gap-2 transition-opacity shadow-lg"
             >
               <Crown className="h-4 w-4" /> Ver Planos e Fazer Upgrade
             </button>
@@ -574,7 +574,7 @@ function SettingsPage() {
 
                     <Button 
                       onClick={handleSavePersonal}
-                      className="bg-success hover:bg-success/90 text-success-foreground gap-2 font-bold h-10 px-6 mt-2"
+                      className="gradient-primary glow-primary border-transparent hover:opacity-90 text-white gap-2 font-bold h-10 px-6 mt-2 transition-opacity shadow-lg"
                     >
                        <User className="h-4 w-4" /> Salvar Alterações
                     </Button>
@@ -855,7 +855,7 @@ function SettingsPage() {
               <div className="pt-4 flex items-center justify-end border-t border-border mt-8">
                 <Button 
                   onClick={handleSaveNotifs}
-                  className="bg-primary hover:opacity-90 text-white font-bold h-11 px-8 rounded-xl shadow-lg shadow-primary/20 transition-all"
+                  className="gradient-primary glow-primary border-transparent hover:opacity-90 text-white font-bold h-11 px-8 rounded-xl shadow-lg transition-opacity"
                 >
                   Salvar Preferências
                 </Button>
