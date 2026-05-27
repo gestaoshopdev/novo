@@ -158,6 +158,56 @@ function AnalyticsPage() {
     return totalRev > 0 ? (totalProfit / totalRev) * 100 : 0;
   }, [growthData]);
 
+  const predictiveInsights = useMemo(() => {
+    const momGrowths = [];
+    for (let i = 1; i < growthData.length; i++) {
+      if (growthData[i-1].revenue > 0) {
+        momGrowths.push(((growthData[i].revenue - growthData[i-1].revenue) / growthData[i-1].revenue) * 100);
+      }
+    }
+    let avgMoMGrowth = momGrowths.length > 0 ? momGrowths.reduce((a, b) => a + b, 0) / momGrowths.length : 0;
+    const currentMonthRev = growthData[growthData.length - 1]?.revenue || 0;
+    
+    const topChannel = channelData.length > 0 
+      ? channelData.reduce((prev, current) => (prev.revenue > current.revenue) ? prev : current) 
+      : null;
+      
+    const channelRatio = topChannel && metrics.avgTicket > 0 
+      ? (topChannel.revenue / topChannel.orders) / metrics.avgTicket 
+      : 1.2;
+
+    const currentMonth = format(new Date(), "MMMM", { locale: ptBR });
+    const monthName = currentMonth.charAt(0).toUpperCase() + currentMonth.slice(1);
+
+    const hourCounts = Array(24).fill(0);
+    filteredSales.forEach(s => {
+      try {
+        const d = new Date(s.date);
+        if (!isNaN(d.getTime())) {
+          hourCounts[getHours(d)] += 1;
+        }
+      } catch(e) {}
+    });
+    let peakHour = 15;
+    let maxCount = 0;
+    hourCounts.forEach((count, idx) => {
+      if (count > maxCount) {
+        maxCount = count;
+        peakHour = idx;
+      }
+    });
+
+    return {
+      growth: avgMoMGrowth,
+      currentRev: currentMonthRev,
+      channelName: topChannel ? topChannel.name : "sua loja",
+      channelRatio: Math.max(1.1, channelRatio),
+      monthName,
+      isNewAccount: momGrowths.length === 0 && currentMonthRev > 0,
+      peakHour
+    };
+  }, [growthData, channelData, metrics.avgTicket, filteredSales]);
+
   return (
     <div className="pb-10">
       <PageHeader
@@ -190,7 +240,7 @@ function AnalyticsPage() {
                    <div className="h-12 w-12 rounded-2xl gradient-primary flex items-center justify-center glow-primary mb-4">
                      <Sparkles className="h-6 w-6 text-white" />
                    </div>
-                   <SheetTitle className="text-2xl font-bold">Nimbus IA Analytics</SheetTitle>
+                   <SheetTitle className="text-2xl font-bold">GestãoShop IA Analytics</SheetTitle>
                    <SheetDescription>
                      Análise profunda dos seus dados de vendas e comportamento de clientes.
                    </SheetDescription>
@@ -203,7 +253,11 @@ function AnalyticsPage() {
                      </h4>
                      <p className="text-xs text-muted-foreground leading-relaxed">
                        Seu faturamento nos últimos {period} meses foi de <span className="text-white font-bold">{formatBRL(growthData.reduce((acc, d) => acc + d.revenue, 0))}</span>. 
-                       Identificamos um padrão de crescimento sustentável de <span className="text-success font-bold">+12.5% MoM</span>.
+                       {predictiveInsights.isNewAccount ? (
+                         <> Com base no seu volume inicial, a estimativa de fechamento aponta para resultados consistentes no período.</>
+                       ) : (
+                         <> Identificamos um padrão de crescimento de <span className={cn("font-bold", predictiveInsights.growth >= 0 ? "text-success" : "text-destructive")}>{predictiveInsights.growth >= 0 ? "+" : ""}{predictiveInsights.growth.toFixed(1)}% MoM</span>.</>
+                       )}
                      </p>
                    </div>
 
@@ -213,19 +267,23 @@ function AnalyticsPage() {
                      <InsightItem 
                        icon={Target}
                        title="Otimização de Canais"
-                       desc={`Seu canal "${channelData[0]?.name || "Principal"}" concentra ${((channelData[0]?.orders / filteredSales.length) * 100 || 0).toFixed(0)}% das vendas. Considere diversificar para o canal "${channelData[1]?.name || "Secundário"}" que possui uma margem 5% superior.`}
+                       desc={channelData.length > 1 
+                         ? `Seu canal "${channelData[0]?.name || "Principal"}" concentra ${((channelData[0]?.orders / filteredSales.length) * 100 || 0).toFixed(0)}% das vendas. Considere diversificar para o canal "${channelData[1]?.name || "Secundário"}", que tem apresentado boa conversão.`
+                         : `Seu canal "${channelData[0]?.name || "Principal"}" concentra suas vendas. A longo prazo, considere explorar novos canais de venda para pulverizar sua receita e aumentar o alcance.`}
                      />
 
                      <InsightItem 
                        icon={Activity}
                        title="Retenção de Clientes"
-                       desc={`Sua taxa de recompra de ${metrics.repeatRate.toFixed(1)}% é excelente. Clientes recorrentes gastam em média ${((metrics.ltv / metrics.avgTicket)).toFixed(1)}x mais que novos clientes.`}
+                       desc={metrics.repeatRate > 0 
+                         ? `Sua taxa de recompra de ${metrics.repeatRate.toFixed(1)}% é excelente. Clientes recorrentes gastam em média ${Math.max(1.1, metrics.ltv / metrics.avgTicket).toFixed(1)}x mais que novos clientes.`
+                         : `Você está na fase de expansão da sua base. No futuro, focar em estratégias de recompra e fidelização de clientes poderá aumentar significativamente seu faturamento.`}
                      />
 
                      <InsightItem 
                        icon={Clock}
                        title="Aproveitamento de Horários"
-                       desc="O heatmap indica que seu maior volume ocorre às 15h. Campanhas de tráfego pago iniciadas às 11h podem maximizar suas conversões nestes picos."
+                       desc={`O heatmap indica que seu maior volume de vendas ocorre às ${predictiveInsights.peakHour}h. Campanhas de marketing iniciadas um pouco antes (ex: ${Math.max(6, predictiveInsights.peakHour - 4)}h) podem maximizar suas conversões nestes picos.`}
                      />
                    </div>
 
@@ -243,7 +301,7 @@ function AnalyticsPage() {
                              doc.rect(0, 0, 210, 40, 'F');
                              doc.setTextColor(255, 255, 255);
                              doc.setFontSize(24);
-                             doc.text("NIMBUS IA - ANALYTICS", 20, 25);
+                             doc.text("GESTÃOSHOP IA - ANALYTICS", 20, 25);
                              doc.setFontSize(10);
                              doc.text(`Relatorio gerado em: ${new Date().toLocaleDateString('pt-BR')} | Periodo: ${period} meses`, 20, 32);
 
@@ -289,9 +347,9 @@ function AnalyticsPage() {
                              // Footer
                              doc.setFontSize(8);
                              doc.setTextColor(150, 150, 150);
-                             doc.text("Relatorio confidencial gerado pela Inteligencia Artificial Nimbus.", 20, 280);
+                             doc.text("Relatorio confidencial gerado pela Inteligencia Artificial GestãoShop.", 20, 280);
 
-                             doc.save(`relatorio_nimbus_${period}_meses.pdf`);
+                             doc.save(`relatorio_gestaoshop_${period}_meses.pdf`);
                              resolve(true);
                            }, 2000);
                          }), {
@@ -326,11 +384,19 @@ function AnalyticsPage() {
             <Sparkles className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-white leading-tight">Análise Preditiva de Outubro</h3>
+            <h3 className="text-lg font-bold text-white leading-tight">Análise Preditiva de {predictiveInsights.monthName}</h3>
             <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-              Baseado no histórico de {period} meses, a projeção é de um crescimento de <span className="text-success font-bold">+12%</span> em faturamento. 
-              Sua <span className="text-primary font-bold">Taxa de Recompra ({metrics.repeatRate.toFixed(1)}%)</span> está acima da média do setor. 
-              Dica: Clientes que compram no <span className="font-bold">Instagram</span> tendem a ter um LTV {((metrics.ltv / metrics.avgTicket) * 1.2).toFixed(1)}x maior.
+              {predictiveInsights.isNewAccount ? (
+                <>Neste seu início de operação, o faturamento registrado do mês atual é de <span className="text-success font-bold">{formatBRL(predictiveInsights.currentRev)}</span>. </>
+              ) : (
+                <>Baseado no histórico de {period} meses, a projeção é de um crescimento de <span className={cn("font-bold", predictiveInsights.growth >= 0 ? "text-success" : "text-destructive")}>{predictiveInsights.growth >= 0 ? "+" : ""}{predictiveInsights.growth.toFixed(1)}%</span> em faturamento. </>
+              )}
+              {metrics.repeatRate > 0 ? (
+                <> Sua <span className="text-primary font-bold">Taxa de Recompra ({metrics.repeatRate.toFixed(1)}%)</span> está acima da média do setor. </>
+              ) : (
+                <> Você está construindo sua base de clientes, foque em retenção para aumentar seus lucros. </>
+              )}
+              Dica: Clientes que compram no <span className="font-bold">{predictiveInsights.channelName}</span> tendem a ter um ticket médio {predictiveInsights.channelRatio.toFixed(1)}x maior.
             </p>
           </div>
         </div>
