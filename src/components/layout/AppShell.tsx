@@ -19,10 +19,10 @@ export function AppShell() {
   console.log("[AppShell] Render - planStatus:", planStatus, "daysRemaining:", daysRemaining, "expiryWarningOpen:", expiryWarningOpen, "simulateExpiry:", simulateExpiry);
 
   useEffect(() => {
-    // Só disparar o popup se o plano não estiver expirado e estiver a 5 dias ou menos do vencimento
+    // Só disparar o popup se o plano estiver ativo (assinante) e estiver a 5 dias ou menos do vencimento
     // Controlado via sessionStorage para aparecer apenas uma vez por login (nova sessão)
     if (
-      planStatus !== "expired" &&
+      planStatus === "active" &&
       daysRemaining <= 5 &&
       daysRemaining > 0 &&
       sessionStorage.getItem("hasShownExpiryWarning") !== "true"
