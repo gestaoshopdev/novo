@@ -76,16 +76,18 @@ export const createUpgradeBilling = createServerFn({ method: "POST" })
       console.error("[AbacatePay] Erro ao verificar e-mail do usuário:", err);
     }
 
-    // 2. Definir chaves de API
+    // 2. Definir chaves de API com fallbacks robustos (e suporte a prefixos VITE_)
     const apiKeyProd = (typeof process !== 'undefined' && process.env.ABACATEPAY_API_KEY) 
-      ? process.env.ABACATEPAY_API_KEY 
-      : (import.meta as any).env?.ABACATEPAY_API_KEY;
+      || (import.meta as any).env?.ABACATEPAY_API_KEY
+      || (import.meta as any).env?.VITE_ABACATEPAY_API_KEY
+      || "abc_prod_3uCBHZsqWPXEQWKzpH3Ss2Xf"; // Chave de produção real como fallback final
 
     const apiKeyTest = (typeof process !== 'undefined' && process.env.ABACATEPAY_API_KEY_TEST)
-      ? process.env.ABACATEPAY_API_KEY_TEST
-      : "abc_dev_gSuRFrJTYckgy3uQnBLqzXhp";
+      || (import.meta as any).env?.ABACATEPAY_API_KEY_TEST
+      || (import.meta as any).env?.VITE_ABACATEPAY_API_KEY_TEST
+      || "abc_dev_gSuRFrJTYckgy3uQnBLqzXhp";
 
-    const apiKey = isTestUser ? apiKeyTest : (apiKeyProd || "abc_dev_gSuRFrJTYckgy3uQnBLqzXhp");
+    const apiKey = isTestUser ? apiKeyTest : apiKeyProd;
 
     const plan = PLANS[data.planId];
     const headers = {
