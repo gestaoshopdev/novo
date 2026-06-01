@@ -55,10 +55,37 @@ export const createUpgradeBilling = createServerFn({ method: "POST" })
     userId: z.string().uuid()
   }).parse(data))
   .handler(async ({ data }) => {
-    // Pegamos a chave dentro do handler para segurança e compatibilidade
-    const apiKey = (typeof process !== 'undefined' && process.env.ABACATEPAY_API_KEY) 
+    const supabase = createClient(
+      (typeof process !== 'undefined' && process.env.VITE_SUPABASE_URL) || "https://ylsdljylqbnuajjyipwy.supabase.co",
+      (typeof process !== 'undefined' && process.env.VITE_SUPABASE_ANON_KEY) || "sb_publishable_nqdrO05frnjf0uatCInaNQ_KQQYbOry"
+    );
+
+    // 1. Verificar se é o usuário de teste (jcasales15@gmail.com)
+    let isTestUser = false;
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("email")
+        .eq("id", data.userId)
+        .maybeSingle();
+
+      if (profile?.email?.toLowerCase().trim() === "jcasales15@gmail.com") {
+        isTestUser = true;
+      }
+    } catch (err) {
+      console.error("[AbacatePay] Erro ao verificar e-mail do usuário:", err);
+    }
+
+    // 2. Definir chaves de API
+    const apiKeyProd = (typeof process !== 'undefined' && process.env.ABACATEPAY_API_KEY) 
       ? process.env.ABACATEPAY_API_KEY 
-      : (import.meta as any).env?.ABACATEPAY_API_KEY || "abc_dev_gSuRFrJTYckgy3uQnBLqzXhp";
+      : (import.meta as any).env?.ABACATEPAY_API_KEY;
+
+    const apiKeyTest = (typeof process !== 'undefined' && process.env.ABACATEPAY_API_KEY_TEST)
+      ? process.env.ABACATEPAY_API_KEY_TEST
+      : "abc_dev_gSuRFrJTYckgy3uQnBLqzXhp";
+
+    const apiKey = isTestUser ? apiKeyTest : (apiKeyProd || "abc_dev_gSuRFrJTYckgy3uQnBLqzXhp");
 
     const plan = PLANS[data.planId];
     const headers = {
@@ -66,12 +93,9 @@ export const createUpgradeBilling = createServerFn({ method: "POST" })
       "Content-Type": "application/json"
     };
 
+    // 3. Buscar desconto
     let discountPercentage = 0;
     try {
-      const supabase = createClient(
-        (typeof process !== 'undefined' && process.env.VITE_SUPABASE_URL) || "https://ylsdljylqbnuajjyipwy.supabase.co",
-        (typeof process !== 'undefined' && process.env.VITE_SUPABASE_ANON_KEY) || "sb_publishable_nqdrO05frnjf0uatCInaNQ_KQQYbOry"
-      );
       const { data: discountData, error: discountError } = await supabase.rpc('get_user_referral_discount', {
         p_user_id: data.userId
       });
