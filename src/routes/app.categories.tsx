@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useCategories, useProducts, useCreateCategory, useUpdateCategory, useDeleteCategory, useRestoreDefaultCategories } from "@/hooks/useQueries";
+import { useProfile } from "@/contexts/ProfileContext";
+import { UpgradePlanModal } from "@/components/billing/UpgradePlanModal";
 import { 
   Tag, Pencil, Trash2, Plus, Watch, Sparkles, Footprints, Home, Laptop, Trophy, 
   Shirt, ShoppingBag, Package, Gift, Smartphone, Utensils, Baby, Activity, 
@@ -96,6 +98,17 @@ function getIconByName(name?: string): LucideIcon {
 }
 
 function CategoriesPage() {
+  const { plan } = useProfile();
+  const isStarter = plan?.toLowerCase() === 'starter' || plan?.toLowerCase() === 'básico';
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
+  const handleBlockedAction = (actionName: string) => {
+    toast.error("Funcionalidade Bloqueada", {
+      description: `A ação de ${actionName} está disponível apenas a partir do plano PRO.`
+    });
+    setUpgradeModalOpen(true);
+  };
+
   const { data: categories = [], isLoading: loadingCategories } = useCategories();
   const { data: products = [], isLoading: loadingProducts } = useProducts();
 
@@ -197,16 +210,34 @@ function CategoriesPage() {
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              onClick={() => setRestoreOpen(true)}
-              disabled={isRestoring}
-              className="border-border hover:bg-background text-muted-foreground hover:text-foreground font-semibold"
+              onClick={() => {
+                if (isStarter) {
+                  handleBlockedAction("restaurar padrões de categorias");
+                } else {
+                  setRestoreOpen(true);
+                }
+              }}
+              disabled={!isStarter && isRestoring}
+              className={cn(
+                "border-border hover:bg-background text-muted-foreground hover:text-foreground font-semibold",
+                isStarter && "opacity-60 cursor-not-allowed"
+              )}
             >
               <RotateCcw className={cn("h-4 w-4 mr-1.5", isRestoring && "animate-spin")} /> 
               Restaurar padrões
             </Button>
             <Button
-              onClick={() => openModal()}
-              className="gradient-primary text-white font-semibold shadow-lg glow-primary border-transparent hover:opacity-90 transition-opacity"
+              onClick={() => {
+                if (isStarter) {
+                  handleBlockedAction("criar nova categoria");
+                } else {
+                  openModal();
+                }
+              }}
+              className={cn(
+                "gradient-primary text-white font-semibold shadow-lg glow-primary border-transparent hover:opacity-90 transition-opacity",
+                isStarter && "opacity-60"
+              )}
             >
               <Plus className="h-4 w-4 mr-1.5" /> Nova Categoria
             </Button>
@@ -253,17 +284,33 @@ function CategoriesPage() {
 
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
-                  onClick={() => openModal(cat)}
-                  className="h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors"
+                  onClick={() => {
+                    if (isStarter) {
+                      handleBlockedAction("editar categoria");
+                    } else {
+                      openModal(cat);
+                    }
+                  }}
+                  className={cn(
+                    "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors",
+                    isStarter && "opacity-50 hover:bg-transparent"
+                  )}
                 >
                   <Pencil className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => {
-                    setDeletingCategory(cat);
-                    setDeleteOpen(true);
+                    if (isStarter) {
+                      handleBlockedAction("excluir categoria");
+                    } else {
+                      setDeletingCategory(cat);
+                      setDeleteOpen(true);
+                    }
                   }}
-                  className="h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                  className={cn(
+                    "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors",
+                    isStarter && "opacity-50 hover:bg-transparent hover:text-muted-foreground"
+                  )}
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>
@@ -364,6 +411,11 @@ function CategoriesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <UpgradePlanModal 
+        open={upgradeModalOpen} 
+        onOpenChange={setUpgradeModalOpen} 
+      />
     </div>
   );
 }

@@ -2,7 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useChannels, useSales, useCreateChannel, useUpdateChannel, useDeleteChannel } from "@/hooks/useQueries";
 import { Globe, Pencil, Trash2, Plus, Store } from "lucide-react";
+import { useProfile } from "@/contexts/ProfileContext";
 import { toast } from "sonner";
+import { UpgradePlanModal } from "@/components/billing/UpgradePlanModal";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,6 +58,17 @@ const periodLabels: Record<PeriodFilter, string> = {
 };
 
 function ChannelsPage() {
+  const { plan } = useProfile();
+  const isStarter = plan?.toLowerCase() === 'starter' || plan?.toLowerCase() === 'básico';
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
+  const handleBlockedAction = (actionName: string) => {
+    toast.error("Funcionalidade Bloqueada", {
+      description: `A ação de ${actionName} está disponível apenas a partir do plano PRO.`
+    });
+    setUpgradeModalOpen(true);
+  };
+
   const { data: channels = [], isLoading: loadingChannels } = useChannels();
   const { data: sales = [], isLoading: loadingSales } = useSales();
   
@@ -171,8 +184,17 @@ function ChannelsPage() {
         icon={Globe}
         actions={
           <Button
-            onClick={() => openModal()}
-            className="gradient-primary text-white font-semibold shadow-lg glow-primary border-transparent hover:opacity-90 transition-opacity"
+            onClick={() => {
+              if (isStarter) {
+                handleBlockedAction("criar novo canal de venda");
+              } else {
+                openModal();
+              }
+            }}
+            className={cn(
+              "gradient-primary text-white font-semibold shadow-lg glow-primary border-transparent hover:opacity-90 transition-opacity",
+              isStarter && "opacity-60"
+            )}
           >
             <Plus className="h-4 w-4 mr-1.5" /> Novo Canal
           </Button>
@@ -236,17 +258,33 @@ function ChannelsPage() {
                   {!isDefault && (
                     <div className="flex items-center gap-1">
                       <button
-                        onClick={() => openModal(c)}
-                        className="h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors"
+                        onClick={() => {
+                          if (isStarter) {
+                            handleBlockedAction("editar canal de venda");
+                          } else {
+                            openModal(c);
+                          }
+                        }}
+                        className={cn(
+                          "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-background/80 hover:text-foreground transition-colors",
+                          isStarter && "opacity-50 hover:bg-transparent"
+                        )}
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </button>
                       <button
                         onClick={() => {
-                          setDeletingChannel(c);
-                          setDeleteOpen(true);
+                          if (isStarter) {
+                            handleBlockedAction("excluir canal de venda");
+                          } else {
+                            setDeletingChannel(c);
+                            setDeleteOpen(true);
+                          }
                         }}
-                        className="h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+                        className={cn(
+                          "h-8 w-8 rounded-md flex items-center justify-center text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors",
+                          isStarter && "opacity-50 hover:bg-transparent hover:text-muted-foreground"
+                        )}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
@@ -330,6 +368,11 @@ function ChannelsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <UpgradePlanModal 
+        open={upgradeModalOpen} 
+        onOpenChange={setUpgradeModalOpen} 
+      />
     </div>
   );
 }

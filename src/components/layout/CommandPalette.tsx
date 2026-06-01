@@ -5,10 +5,13 @@ import {
   LayoutDashboard, Package, ShoppingCart, Wallet, BarChart3, Plus,
   Users, Settings, Sparkles, Zap,
 } from "lucide-react";
+import { useProfile } from "@/contexts/ProfileContext";
 
 export function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {
   const navigate = useNavigate();
   const go = (to: string) => { onOpenChange(false); navigate({ to }); };
+  const { plan } = useProfile();
+  const isStarter = plan?.toLowerCase() === 'starter' || plan?.toLowerCase() === 'básico';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

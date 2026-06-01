@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Package, Tags, ShoppingCart, Radio, CreditCard,
   Wallet, Receipt, TrendingDown, BarChart3, FileText, BookOpen,
-  Store, Gift, Settings, Sparkles, Zap, Users, ChevronRight, Bell, GraduationCap, X
+  Store, Gift, Settings, Sparkles, Zap, Users, ChevronRight, Bell, GraduationCap, X, Lock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "@/assets/logo.png";
@@ -67,6 +67,8 @@ export function Sidebar() {
   const normalizedPlan = plan?.toLowerCase() || 'starter';
   const isTrial = planStatus === 'trial';
   const isTopPlan = normalizedPlan === 'elite' && !isTrial;
+
+  const isStarter = normalizedPlan === 'starter' || normalizedPlan === 'básico';
 
   const upgradeMessages = [];
   if (normalizedPlan === 'starter' || isTrial) {
@@ -162,9 +164,10 @@ export function Sidebar() {
                         <span className="flex-1">{item.label}</span>
                         {item.badge && (
                           <span className={cn(
-                            "px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase",
+                            "px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase flex items-center gap-1",
                             item.badge === "IA" ? "gradient-primary text-white" : "bg-success/15 text-success",
                           )}>
+                            {isStarter && item.to === "/app/analytics" && <Lock className="h-2.5 w-2.5" />}
                             {item.badge}
                           </span>
                         )}

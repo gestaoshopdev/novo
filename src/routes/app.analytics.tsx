@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useProfile } from "@/contexts/ProfileContext";
+import { UpgradePlanModal } from "@/components/billing/UpgradePlanModal";
 import { 
   BarChart3, Sparkles, TrendingUp, Users, ShoppingBag, 
   Target, Calendar, Clock, ArrowUpRight, ArrowDownRight,
@@ -41,6 +43,10 @@ export const Route = createFileRoute("/app/analytics")({
 const DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 function AnalyticsPage() {
+  const { plan } = useProfile();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const isStarter = plan?.toLowerCase() === 'starter' || plan?.toLowerCase() === 'básico';
+
   const { data: sales = [] } = useSales();
   const { data: products = [] } = useProducts();
   const { data: channels = [] } = useChannels();
@@ -207,6 +213,31 @@ function AnalyticsPage() {
       peakHour
     };
   }, [growthData, channelData, metrics.avgTicket, filteredSales]);
+
+  if (isStarter) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center max-w-md mx-auto">
+        <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center glow-primary mb-6">
+          <Sparkles className="h-8 w-8 text-primary" />
+        </div>
+        <h3 className="text-xl font-bold text-white mb-2">Recurso do Plano Pro / Elite</h3>
+        <p className="text-sm text-muted-foreground mb-8 leading-relaxed">
+          O módulo de **Analytics com Inteligência Artificial** está disponível apenas para assinantes a partir do plano **Pro**.
+          Acompanhe previsões de vendas, heatmap de horários, recomendações automáticas e muito mais!
+        </p>
+        <div className="flex gap-4">
+          <Button 
+            onClick={() => setUpgradeOpen(true)}
+            className="gradient-primary text-white font-semibold shadow-lg glow-primary border-transparent hover:opacity-90 transition-opacity"
+          >
+            Fazer Upgrade Agora
+          </Button>
+        </div>
+
+        <UpgradePlanModal open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      </div>
+    );
+  }
 
   return (
     <div className="pb-10">

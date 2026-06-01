@@ -36,6 +36,7 @@ export const Route = createFileRoute("/app/settings")({
 
 function SettingsPage() {
   const { name, photo, updateProfile, plan, planStatus, planExpiry, daysRemaining } = useProfile();
+  const isStarter = plan?.toLowerCase() === 'starter' || plan?.toLowerCase() === 'básico';
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const search = (Route as any).useSearch();
