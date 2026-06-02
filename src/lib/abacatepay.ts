@@ -62,14 +62,19 @@ export const createUpgradeBilling = createServerFn({ method: "POST" })
 
     // 1. Verificar se é o usuário de teste (jcasales15@gmail.com)
     let isTestUser = false;
+    let userEmail = "";
+    let userName = "";
     try {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("email")
+        .select("email, full_name")
         .eq("id", data.userId)
         .maybeSingle();
 
-      if (profile?.email?.toLowerCase().trim() === "jcasales15@gmail.com") {
+      userEmail = profile?.email || "";
+      userName = profile?.full_name || "";
+
+      if (userEmail.toLowerCase().trim() === "jcasales15@gmail.com") {
         isTestUser = true;
       }
     } catch (err) {
@@ -160,6 +165,8 @@ export const createUpgradeBilling = createServerFn({ method: "POST" })
             planId: data.planId
           },
           customer: {
+            email: userEmail,
+            name: userName,
             metadata: {
               userId: data.userId,
               planId: data.planId
