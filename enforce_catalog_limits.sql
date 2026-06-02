@@ -83,5 +83,18 @@ BEGIN
     END
   WHERE user_id = p_user_id;
 
+  -- 7. Forçar limites visuais dos catálogos (cores e banner)
+  IF v_plan_lower = 'starter' OR v_plan_lower = 'básico' THEN
+    -- No plano starter/básico: remove banner_image e restaura cores padrão
+    UPDATE public.catalogs
+    SET colors = '{"background": "#0F172A", "primary": "#10B981", "card": "#FFFFFF", "text": "#111827", "price": "#10B981", "button": "#10B981"}'::jsonb
+    WHERE user_id = p_user_id;
+  ELSIF v_plan_lower = 'pro' THEN
+    -- No plano pro: remove apenas o banner_image, mantendo as cores customizadas
+    UPDATE public.catalogs
+    SET colors = COALESCE(colors, '{}'::jsonb) - 'banner_image'
+    WHERE user_id = p_user_id;
+  END IF;
+
 END;
 $$;

@@ -993,6 +993,22 @@ export async function createCatalog(catalog: Omit<CatalogSettings, "id" | "creat
 
 export async function updateCatalog(id: string, updates: Partial<CatalogSettings>) {
   const userId = await getUserId();
+  
+  // Buscar o plano do usuário para validar os limites de cores/banner
+  let plan = "Starter";
+  try {
+    const { data: profile } = await supabase.from("profiles").select("plan_type").eq("id", userId).maybeSingle();
+    if (profile?.plan_type) {
+      plan = profile.plan_type;
+    }
+  } catch (err) {
+    console.error("Erro ao buscar plano do usuário para verificar limites do catálogo:", err);
+  }
+  
+  const planLower = plan.toLowerCase();
+  const isElite = planLower === "elite";
+  const isStarter = planLower === "starter" || planLower === "básico";
+
   const dbUpdates: any = { ...updates };
   
   if (updates.profile_photo) {
@@ -1001,11 +1017,32 @@ export async function updateCatalog(id: string, updates: Partial<CatalogSettings
   
   if (updates.banner_image !== undefined) {
     let bannerUrl = updates.banner_image;
-    if (updates.banner_image) {
+    if (updates.banner_image && isElite) {
       bannerUrl = await uploadBase64Image(updates.banner_image, 'produtos');
+    } else {
+      // Se não for Elite, removemos a imagem do banner
+      bannerUrl = null;
     }
     dbUpdates.colors = { ...(dbUpdates.colors || {}), banner_image: bannerUrl };
     delete dbUpdates.banner_image;
+  }
+
+  // Se o plano não for Elite e houver alteração de cores, garantir que não salve banner_image
+  if (!isElite && dbUpdates.colors) {
+    dbUpdates.colors = { ...dbUpdates.colors };
+    delete dbUpdates.colors.banner_image;
+  }
+
+  // Se o plano for Starter/Básico, forçar cores padrão
+  if (isStarter) {
+    dbUpdates.colors = {
+      background: "#0F172A",
+      primary: "#10B981",
+      card: "#FFFFFF",
+      text: "#111827",
+      price: "#10B981",
+      button: "#10B981",
+    };
   }
 
   const { data, error } = await supabase.from("catalogs").update(dbUpdates).eq("id", id).eq("user_id", userId).select().single();
