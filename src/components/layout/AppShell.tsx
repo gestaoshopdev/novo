@@ -14,9 +14,8 @@ export function AppShell() {
   const { user } = useAuth();
   const [modalOpen, setModalOpen] = useState(false);
   const [expiryWarningOpen, setExpiryWarningOpen] = useState(false);
-  const [simulateExpiry, setSimulateExpiry] = useState(false);
 
-  console.log("[AppShell] Render - planStatus:", planStatus, "daysRemaining:", daysRemaining, "expiryWarningOpen:", expiryWarningOpen, "simulateExpiry:", simulateExpiry);
+  console.log("[AppShell] Render - planStatus:", planStatus, "daysRemaining:", daysRemaining, "expiryWarningOpen:", expiryWarningOpen);
 
   useEffect(() => {
     // Só disparar o popup se o plano estiver ativo (assinante) e estiver a 5 dias ou menos do vencimento
@@ -66,42 +65,7 @@ export function AppShell() {
         )}
       </div>
 
-      {/* Botão de Simulação (exclusivo para jcasales15@gmail.com) */}
-      {user?.email === "jcasales15@gmail.com" && (
-        <motion.div 
-          drag
-          dragMomentum={false}
-          className="fixed bottom-6 left-6 z-[60] flex flex-col gap-2 cursor-grab active:cursor-grabbing select-none"
-        >
-          {/* Painel de Depuração Visual */}
-          <div className="bg-black/95 text-white text-[11px] p-3 rounded-xl border border-white/20 font-mono space-y-1 shadow-2xl">
-            <div className="font-bold text-amber-400 mb-1 flex items-center justify-between gap-2">
-              <span>🔍 DEBUG EXPIRY</span>
-              <span className="text-[9px] text-gray-400 font-normal">(Arraste para mover)</span>
-            </div>
-            <div>warningOpen: {expiryWarningOpen ? "✅ TRUE" : "❌ FALSE"}</div>
-            <div>simulate: {simulateExpiry ? "✅ TRUE" : "❌ FALSE"}</div>
-            <div>planStatus: {planStatus}</div>
-            <div>days: {daysRemaining}</div>
-            <div className="pt-1 text-[9px] text-gray-400">plan: {plan}</div>
-          </div>
-          
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log("[AppShell] Simulate button clicked");
-              sessionStorage.removeItem("hasShownExpiryWarning");
-              setSimulateExpiry(true);
-              setExpiryWarningOpen(true);
-            }}
-            className="h-10 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-lg flex items-center justify-center gap-1.5 transition-transform hover:scale-105 pointer-events-auto"
-          >
-            <Sparkles className="w-3.5 h-3.5" />
-            Simular 5 Dias Restantes
-          </button>
-        </motion.div>
-      )}
+
 
       {/* Modais Globais de Assinatura */}
       <UpgradePlanModal open={modalOpen} onOpenChange={setModalOpen} />
@@ -111,8 +75,8 @@ export function AppShell() {
           console.log("[AppShell] ExpiryWarningModal onOpenChange triggered:", val);
           setExpiryWarningOpen(val);
         }}
-        daysRemaining={simulateExpiry ? 5 : daysRemaining}
-        planExpiry={simulateExpiry ? new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString() : planExpiry}
+        daysRemaining={daysRemaining}
+        planExpiry={planExpiry}
         currentPlanName={plan}
         onOpenUpgradeModal={() => setModalOpen(true)}
       />
